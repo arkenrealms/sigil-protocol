@@ -1,12 +1,12 @@
 {
   "name": "@arken/sigil-protocol",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "scripts": {
     "build": "npm-run-all dist",
     "clean": "del-cli ./build && make-dir ./build",
     "dist": "npm-run-all clean tsc:*",
     "publish": "npm publish --access=public",
-    "tsc:1": "rm -rf ./build && mkdir ./build && cp package.json ./build && NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 tsc"
+    "tsc:1": "rm -rf ./build && mkdir ./build && cp package.json ./build && NODE_ENV=production NODE_OPTIONS=--max-old-space-size=8192 tsc -p tsconfig.build.json --listFiles"
   },
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -31,6 +31,7 @@
     "@types/jest": "^29",
     "@types/node": "^20",
     "zod": "^3",
+    "npm-run-all": "^4",
     "dotenv": "^16"
   },
   "devDependencies": {

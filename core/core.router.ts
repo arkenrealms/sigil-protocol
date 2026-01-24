@@ -1,32 +1,22 @@
-// sigil/protocol/core/core.router.ts
+// arken/sigil/protocol/core/core.router.ts
 //
-import { z } from "zod";
-import {
-  Query,
-  getQueryInput,
-  inferRouterOutputs,
-  inferRouterInputs,
-} from "../util/schema";
+import { z } from 'zod';
+import { Query, getQueryInput, inferRouterOutputs, inferRouterInputs } from '../util/schema';
+import { type SigilTRPC } from '../';
 
-export const createRouter = (t: any) =>
+export const createRouter = (t: SigilTRPC) =>
   t.router({
     onInitializing: t.procedure
       .input(z.object({ args: z.string().optional() }).optional())
-      .mutation(({ input, ctx }) =>
-        ctx.app.service.core.onInitializing(input, ctx),
-      ),
+      .mutation(({ input, ctx }) => ctx.app.service.core.onInitializing(input, ctx)),
 
     onInitialized: t.procedure
       .input(z.object({ args: z.string().optional() }).optional())
-      .mutation(({ input, ctx }) =>
-        ctx.app.service.core.onInitialized(input, ctx),
-      ),
+      .mutation(({ input, ctx }) => ctx.app.service.core.onInitialized(input, ctx)),
 
     onAuthorized: t.procedure
       .input(z.object({ args: z.string() }))
-      .mutation(({ input, ctx }) =>
-        ctx.app.service.core.onAuthorized(input, ctx),
-      ),
+      .mutation(({ input, ctx }) => ctx.app.service.core.onAuthorized(input, ctx)),
   });
 
 export type Router = ReturnType<typeof createRouter>;
