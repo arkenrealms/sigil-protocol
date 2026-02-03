@@ -34,6 +34,6 @@
     "noUnusedParameters": false,
     "pretty": true
   },
-  "include": ["core/**/*", "util/**/*"],
+  "include": ["core/**/*", "util/**/*", "index.ts"],
   "exclude": ["node_modules", "build"]
 }
