@@ -305,6 +305,8 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
 
       // keep your query envelope fields
       skip: zod.number().default(0).optional(),
+      // Accept both `take` (Prisma-style) and legacy `limit`.
+      take: zod.number().default(10).optional(),
       limit: zod.number().default(10).optional(),
       cursor: zod.record(zod.any()).optional(),
 

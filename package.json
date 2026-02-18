@@ -3,6 +3,8 @@
   "version": "0.1.3",
   "scripts": {
     "build": "npm-run-all dist",
+    "test": "npm-run-all dist test:jest",
+    "test:jest": "jest --runInBand build/test/queryInput.test.js",
     "clean": "del-cli ./build && make-dir ./build",
     "dist": "npm-run-all clean tsc:*",
     "publish": "npm publish --access=public",
