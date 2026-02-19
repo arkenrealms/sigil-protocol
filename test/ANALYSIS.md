@@ -7,5 +7,6 @@
 - Validates Prisma-style single-object `NOT` clauses are accepted and normalized.
 - Validates field-level nested `not` operator objects are accepted (Prisma-compatible filter shape).
 - Validates string-filter `mode` accepts Prisma-compatible values and rejects unsupported values.
+- Validates Date shorthand filters are preserved as `{ equals: Date }` instead of being dropped when non-plain object values are provided.
 - Validates `orderBy` parsing supports Prisma-style array envelopes and rejects unsupported direction values.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

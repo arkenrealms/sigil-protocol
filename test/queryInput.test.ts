@@ -5,6 +5,7 @@ describe('getQueryInput', () => {
   const model = z.object({
     name: z.string(),
     level: z.number(),
+    createdAt: z.date(),
   });
 
   it('keeps Prisma-style take pagination when provided', () => {
@@ -85,6 +86,18 @@ describe('getQueryInput', () => {
     });
 
     expect(parsed?.where?.name?.mode).toBe('insensitive');
+  });
+
+  it('preserves Date shorthand filters as equals clauses', () => {
+    const schema = getQueryInput(model);
+    const now = new Date('2026-02-18T20:00:00.000Z');
+    const parsed = schema.parse({
+      where: {
+        createdAt: now,
+      },
+    });
+
+    expect(parsed?.where?.createdAt?.equals).toEqual(now);
   });
 
   it('rejects unsupported string filter mode values', () => {

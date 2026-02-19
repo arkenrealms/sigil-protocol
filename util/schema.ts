@@ -206,6 +206,15 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
 ): zod.ZodObject<any> => {
   const fields = modelSchema.shape;
 
+  const isPlainObject = (value: unknown) => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      return false;
+    }
+
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  };
+
   /**
    * For each field, accept either:
    *   - a full operator object: { equals, in, lt, ... }
@@ -237,11 +246,7 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         if (input === undefined) return input;
 
         // Already an object (likely { equals, in, ... }) → validate as-is
-        if (
-          typeof input === "object" &&
-          input !== null &&
-          !Array.isArray(input)
-        ) {
+        if (isPlainObject(input)) {
           return input;
         }
 
