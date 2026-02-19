@@ -258,16 +258,18 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     });
   }
 
+  const nestedWhereSchema = zod.lazy(() =>
+    createPrismaWhereSchema(modelSchema, depth - 1),
+  );
+  const logicalSchema = zod.union([
+    nestedWhereSchema,
+    zod.array(nestedWhereSchema),
+  ]);
+
   return zod.object({
-    AND: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
-    OR: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
-    NOT: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
+    AND: logicalSchema.optional(),
+    OR: logicalSchema.optional(),
+    NOT: logicalSchema.optional(),
     ...fieldFilters,
   });
 };
@@ -319,7 +321,14 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       include: zod.record(zod.boolean()).optional(),
       select: zod.record(zod.boolean()).optional(),
     })
-    .partial();
+    .partial()
+    .transform((query) => {
+      if (query.take === undefined && query.limit !== undefined) {
+        return { ...query, take: query.limit };
+      }
+
+      return query;
+    });
 
   return zod.union([querySchema, zod.undefined()]);
 };

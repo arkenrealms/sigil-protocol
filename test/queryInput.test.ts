@@ -25,5 +25,19 @@ describe('getQueryInput', () => {
 
     expect(parsed).toBeDefined();
     expect(parsed?.limit).toBe(50);
+    expect(parsed?.take).toBe(50);
+  });
+
+  it('supports Prisma-style single-object NOT filters', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      where: {
+        NOT: { name: 'mage' },
+      },
+    });
+
+    expect(parsed?.where?.NOT).toBeDefined();
+    expect(Array.isArray(parsed?.where?.NOT)).toBe(false);
+    expect((parsed?.where?.NOT as any)?.name?.equals).toBe('mage');
   });
 });
