@@ -179,6 +179,28 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty orderBy envelopes', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: {},
+      }),
+    ).toThrow('orderBy object must include at least one field');
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{}],
+      }),
+    ).toThrow('orderBy object must include at least one field');
+
+    expect(() =>
+      schema.parse({
+        orderBy: [],
+      }),
+    ).toThrow('orderBy array must include at least one object');
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
