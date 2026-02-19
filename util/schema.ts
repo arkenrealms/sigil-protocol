@@ -1,4 +1,4 @@
-// arken/sigil/protocol/util/schema.ts
+// arken/packages/sigil-protocol/util/schema.ts
 //
 import Mongoose, { Types } from "mongoose";
 import { z as zod, ZodTypeAny, ZodLazy, ZodObject, ZodArray } from "zod";
@@ -106,12 +106,14 @@ const QueryWhereSchema = z.lazy(() =>
   }),
 );
 
+const QueryOrderBySchema = z.record(z.enum(["asc", "desc"]));
+
 export const Query = z.object({
-  skip: z.number().default(0).optional(),
-  take: z.number().default(10).optional(),
+  skip: z.number().int().min(0).default(0).optional(),
+  take: z.number().int().min(0).default(10).optional(),
   cursor: z.record(z.any()).optional(),
   where: QueryWhereSchema.optional(),
-  orderBy: z.record(z.enum(["asc", "desc"])).optional(),
+  orderBy: z.union([QueryOrderBySchema, z.array(QueryOrderBySchema)]).optional(),
   include: z.record(z.boolean()).optional(),
   select: z.record(z.boolean()).optional(),
 });
@@ -204,28 +206,46 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
 ): zod.ZodObject<any> => {
   const fields = modelSchema.shape;
 
+  const isPlainObject = (value: unknown) => {
+    if (typeof value !== "object" || value === null || Array.isArray(value)) {
+      return false;
+    }
+
+    const prototype = Object.getPrototypeOf(value);
+    return prototype === Object.prototype || prototype === null;
+  };
+
   /**
    * For each field, accept either:
    *   - a full operator object: { equals, in, lt, ... }
    *   - OR a raw value shorthand: 'foo'  -> { equals: 'foo' }
    */
   const makeFieldFilter = (value: zod.ZodTypeAny) => {
-    const opsSchema = zod
-      .object({
-        equals: value.optional(),
-        not: value.optional(),
-        in: zod.array(value).optional(),
-        notIn: zod.array(value).optional(),
-        lt: value.optional(),
-        lte: value.optional(),
-        gt: value.optional(),
-        gte: value.optional(),
-        contains: zod.string().optional(),
-        startsWith: zod.string().optional(),
-        endsWith: zod.string().optional(),
-        mode: zod.string().optional(),
-      })
-      .partial();
+    const isStringField = value instanceof zod.ZodString;
+
+    const opsSchema: zod.ZodTypeAny = zod.lazy(() =>
+      zod
+        .object({
+          equals: value.optional(),
+          not: zod.union([value, opsSchema]).optional(),
+          in: zod.array(value).optional(),
+          notIn: zod.array(value).optional(),
+          lt: value.optional(),
+          lte: value.optional(),
+          gt: value.optional(),
+          gte: value.optional(),
+          ...(isStringField
+            ? {
+                contains: zod.string().optional(),
+                startsWith: zod.string().optional(),
+                endsWith: zod.string().optional(),
+                mode: zod.enum(["default", "insensitive"]).optional(),
+              }
+            : {}),
+        })
+        .partial()
+        .strict(),
+    );
 
     return zod
       .preprocess((input) => {
@@ -233,11 +253,7 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         if (input === undefined) return input;
 
         // Already an object (likely { equals, in, ... }) → validate as-is
-        if (
-          typeof input === "object" &&
-          input !== null &&
-          !Array.isArray(input)
-        ) {
+        if (isPlainObject(input)) {
           return input;
         }
 
@@ -258,16 +274,18 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     });
   }
 
+  const nestedWhereSchema = zod.lazy(() =>
+    createPrismaWhereSchema(modelSchema, depth - 1),
+  );
+  const logicalSchema = zod.union([
+    nestedWhereSchema,
+    zod.array(nestedWhereSchema),
+  ]);
+
   return zod.object({
-    AND: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
-    OR: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
-    NOT: zod
-      .array(zod.lazy(() => createPrismaWhereSchema(modelSchema, depth - 1)))
-      .optional(),
+    AND: logicalSchema.optional(),
+    OR: logicalSchema.optional(),
+    NOT: logicalSchema.optional(),
     ...fieldFilters,
   });
 };
@@ -304,8 +322,10 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       data: dataSchema,
 
       // keep your query envelope fields
-      skip: zod.number().default(0).optional(),
-      limit: zod.number().default(10).optional(),
+      skip: zod.number().int().min(0).default(0).optional(),
+      // Accept both `take` (Prisma-style) and legacy `limit`.
+      take: zod.number().int().min(0).default(10).optional(),
+      limit: zod.number().int().min(0).default(10).optional(),
       cursor: zod.record(zod.any()).optional(),
 
       // only valid for object schemas
@@ -313,11 +333,35 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
         ? whereSchema.optional()
         : zod.undefined().optional(),
 
-      orderBy: zod.record(zod.enum(["asc", "desc"])).optional(),
+      orderBy: zod
+        .union([
+          zod.record(zod.enum(["asc", "desc"])),
+          zod.array(zod.record(zod.enum(["asc", "desc"]))),
+        ])
+        .optional(),
       include: zod.record(zod.boolean()).optional(),
       select: zod.record(zod.boolean()).optional(),
     })
-    .partial();
+    .partial()
+    .transform((query) => {
+      if (query.take === undefined && query.limit !== undefined) {
+        return { ...query, take: query.limit };
+      }
+
+      if (query.take !== undefined && query.limit === undefined) {
+        return { ...query, limit: query.take };
+      }
+
+      if (
+        query.take !== undefined &&
+        query.limit !== undefined &&
+        query.take !== query.limit
+      ) {
+        return { ...query, limit: query.take };
+      }
+
+      return query;
+    });
 
   return zod.union([querySchema, zod.undefined()]);
 };
