@@ -1,4 +1,4 @@
-// arken/sigil/protocol/util/schema.ts
+// arken/packages/sigil-protocol/util/schema.ts
 //
 import Mongoose, { Types } from "mongoose";
 import { z as zod, ZodTypeAny, ZodLazy, ZodObject, ZodArray } from "zod";
@@ -107,8 +107,8 @@ const QueryWhereSchema = z.lazy(() =>
 );
 
 export const Query = z.object({
-  skip: z.number().default(0).optional(),
-  take: z.number().default(10).optional(),
+  skip: z.number().int().min(0).default(0).optional(),
+  take: z.number().int().min(0).default(10).optional(),
   cursor: z.record(z.any()).optional(),
   where: QueryWhereSchema.optional(),
   orderBy: z.record(z.enum(["asc", "desc"])).optional(),
@@ -306,10 +306,10 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       data: dataSchema,
 
       // keep your query envelope fields
-      skip: zod.number().default(0).optional(),
+      skip: zod.number().int().min(0).default(0).optional(),
       // Accept both `take` (Prisma-style) and legacy `limit`.
-      take: zod.number().default(10).optional(),
-      limit: zod.number().default(10).optional(),
+      take: zod.number().int().min(0).default(10).optional(),
+      limit: zod.number().int().min(0).default(10).optional(),
       cursor: zod.record(zod.any()).optional(),
 
       // only valid for object schemas

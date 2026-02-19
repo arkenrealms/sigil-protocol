@@ -40,4 +40,20 @@ describe('getQueryInput', () => {
     expect(Array.isArray(parsed?.where?.NOT)).toBe(false);
     expect((parsed?.where?.NOT as any)?.name?.equals).toBe('mage');
   });
+
+  it('rejects negative pagination values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() => schema.parse({ skip: -1 })).toThrow();
+    expect(() => schema.parse({ take: -5 })).toThrow();
+    expect(() => schema.parse({ limit: -10 })).toThrow();
+  });
+
+  it('rejects non-integer pagination values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() => schema.parse({ skip: 1.2 })).toThrow();
+    expect(() => schema.parse({ take: 2.5 })).toThrow();
+    expect(() => schema.parse({ limit: 3.8 })).toThrow();
+  });
 });
