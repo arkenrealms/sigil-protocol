@@ -73,6 +73,35 @@ describe('getQueryInput', () => {
     expect((parsed?.where?.name?.not as any)?.contains).toBe('mage');
   });
 
+  it('accepts Prisma-compatible string filter mode values', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      where: {
+        name: {
+          contains: 'mage',
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    expect(parsed?.where?.name?.mode).toBe('insensitive');
+  });
+
+  it('rejects unsupported string filter mode values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: {
+            contains: 'mage',
+            mode: 'wild',
+          },
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 

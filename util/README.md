@@ -11,3 +11,4 @@ Shared schema helpers for Sigil protocol routers.
 - Pagination fields (`skip`/`take`/`limit`) are validated as non-negative integers to prevent invalid downstream query envelopes.
 - `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or an array.
 - Field-level `not` filters accept both scalar shorthand values and nested operator objects (Prisma-compatible), e.g. `{ name: { not: { contains: 'foo' } } }`.
+- String-filter `mode` is constrained to Prisma-compatible values (`default` | `insensitive`) to reject unsupported options early.
