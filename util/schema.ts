@@ -329,6 +329,18 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
         return { ...query, take: query.limit };
       }
 
+      if (query.take !== undefined && query.limit === undefined) {
+        return { ...query, limit: query.take };
+      }
+
+      if (
+        query.take !== undefined &&
+        query.limit !== undefined &&
+        query.take !== query.limit
+      ) {
+        return { ...query, limit: query.take };
+      }
+
       return query;
     });
 

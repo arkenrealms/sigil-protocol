@@ -28,6 +28,24 @@ describe('getQueryInput', () => {
     expect(parsed?.take).toBe(50);
   });
 
+  it('mirrors take-only pagination into limit for compatibility callers', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({ take: 12 });
+
+    expect(parsed).toBeDefined();
+    expect(parsed?.take).toBe(12);
+    expect(parsed?.limit).toBe(12);
+  });
+
+  it('normalizes conflicting take/limit values to take as canonical', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({ take: 7, limit: 3 });
+
+    expect(parsed).toBeDefined();
+    expect(parsed?.take).toBe(7);
+    expect(parsed?.limit).toBe(7);
+  });
+
   it('supports Prisma-style single-object NOT filters', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({

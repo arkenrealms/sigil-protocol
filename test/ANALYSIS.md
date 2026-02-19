@@ -1,7 +1,8 @@
 # arken/packages/sigil-protocol/test ANALYSIS
 
 - Added focused regression tests for `getQueryInput`.
-- Validates Prisma-style `take` preservation, legacy `limit` compatibility, and `limit`→`take` normalization.
+- Validates Prisma-style `take` preservation, legacy `limit` compatibility, and bidirectional `take`/`limit` normalization.
+- Validates conflicting `take` + `limit` envelopes normalize to `take` as canonical.
 - Validates pagination fields reject invalid values (negative and non-integer numbers).
 - Validates Prisma-style single-object `NOT` clauses are accepted and normalized.
 - Validates field-level nested `not` operator objects are accepted (Prisma-compatible filter shape).
