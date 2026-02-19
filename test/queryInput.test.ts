@@ -179,6 +179,22 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty orderBy objects', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ level: 'desc' }, {}],
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 

@@ -106,7 +106,11 @@ const QueryWhereSchema = z.lazy(() =>
   }),
 );
 
-const QueryOrderBySchema = z.record(z.enum(["asc", "desc"]));
+const QueryOrderBySchema = z
+  .record(z.enum(["asc", "desc"]))
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "orderBy object must include at least one field",
+  });
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
@@ -350,10 +354,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
         : zod.undefined().optional(),
 
       orderBy: zod
-        .union([
-          zod.record(zod.enum(["asc", "desc"])),
-          zod.array(zod.record(zod.enum(["asc", "desc"]))),
-        ])
+        .union([QueryOrderBySchema, zod.array(QueryOrderBySchema)])
         .optional(),
       include: zod.record(zod.boolean()).optional(),
       select: zod.record(zod.boolean()).optional(),

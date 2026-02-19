@@ -16,3 +16,4 @@ Shared schema helpers for Sigil protocol routers.
 - String-only operators (`contains` / `startsWith` / `endsWith` / `mode`) are now only accepted on string fields to fail fast before invalid Prisma query construction on numeric/date fields.
 - Optional/nullable/default-wrapped string fields are unwrapped before filter generation, so valid string operators continue to work on fields like `z.string().optional()`.
 - `orderBy` accepts both a single object and Prisma-style arrays of objects (e.g. `[{ level: 'desc' }, { name: 'asc' }]`).
+- Empty `orderBy` objects are rejected to prevent no-op sort clauses from slipping through schema validation.
