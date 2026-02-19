@@ -210,22 +210,24 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
    *   - OR a raw value shorthand: 'foo'  -> { equals: 'foo' }
    */
   const makeFieldFilter = (value: zod.ZodTypeAny) => {
-    const opsSchema = zod
-      .object({
-        equals: value.optional(),
-        not: value.optional(),
-        in: zod.array(value).optional(),
-        notIn: zod.array(value).optional(),
-        lt: value.optional(),
-        lte: value.optional(),
-        gt: value.optional(),
-        gte: value.optional(),
-        contains: zod.string().optional(),
-        startsWith: zod.string().optional(),
-        endsWith: zod.string().optional(),
-        mode: zod.string().optional(),
-      })
-      .partial();
+    const opsSchema: zod.ZodTypeAny = zod.lazy(() =>
+      zod
+        .object({
+          equals: value.optional(),
+          not: zod.union([value, opsSchema]).optional(),
+          in: zod.array(value).optional(),
+          notIn: zod.array(value).optional(),
+          lt: value.optional(),
+          lte: value.optional(),
+          gt: value.optional(),
+          gte: value.optional(),
+          contains: zod.string().optional(),
+          startsWith: zod.string().optional(),
+          endsWith: zod.string().optional(),
+          mode: zod.string().optional(),
+        })
+        .partial(),
+    );
 
     return zod
       .preprocess((input) => {

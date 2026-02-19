@@ -41,6 +41,20 @@ describe('getQueryInput', () => {
     expect((parsed?.where?.NOT as any)?.name?.equals).toBe('mage');
   });
 
+  it('supports nested not operator objects inside field filters', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      where: {
+        name: {
+          not: { contains: 'mage' },
+        },
+      },
+    });
+
+    expect(parsed?.where?.name?.not).toBeDefined();
+    expect((parsed?.where?.name?.not as any)?.contains).toBe('mage');
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
