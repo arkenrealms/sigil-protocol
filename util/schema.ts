@@ -351,8 +351,22 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
 
       orderBy: zod
         .union([
-          zod.record(zod.enum(["asc", "desc"])),
-          zod.array(zod.record(zod.enum(["asc", "desc"]))),
+          zod
+            .record(zod.enum(["asc", "desc"]))
+            .refine(
+              (value) => Object.keys(value).length > 0,
+              "orderBy object must include at least one field",
+            ),
+          zod
+            .array(
+              zod
+                .record(zod.enum(["asc", "desc"]))
+                .refine(
+                  (value) => Object.keys(value).length > 0,
+                  "orderBy object must include at least one field",
+                ),
+            )
+            .min(1, "orderBy array must include at least one object"),
         ])
         .optional(),
       include: zod.record(zod.boolean()).optional(),
