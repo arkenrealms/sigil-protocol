@@ -11,5 +11,6 @@ Jest tests for protocol schema helpers.
 - Field-filter nested `not` operator compatibility (`name: { not: { contains: ... } }`)
 - String-filter `mode` validation (`default`/`insensitive` accepted; unsupported modes rejected)
 - String-only operator scoping (reject `contains`/`mode` on non-string fields)
+- Optional string field compatibility (`z.string().optional()` supports `contains`/`mode`)
 - Date shorthand filter compatibility (`where: { createdAt: new Date(...) }` keeps `{ equals: Date }` semantics)
 - `orderBy` compatibility (single object and Prisma-style array envelopes)

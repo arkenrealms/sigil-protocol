@@ -88,6 +88,26 @@ describe('getQueryInput', () => {
     expect(parsed?.where?.name?.mode).toBe('insensitive');
   });
 
+  it('supports string operators for optional string fields', () => {
+    const schema = getQueryInput(
+      z.object({
+        nickname: z.string().optional(),
+      }),
+    );
+
+    const parsed = schema.parse({
+      where: {
+        nickname: {
+          contains: 'arch',
+          mode: 'insensitive',
+        },
+      },
+    });
+
+    expect(parsed?.where?.nickname?.contains).toBe('arch');
+    expect(parsed?.where?.nickname?.mode).toBe('insensitive');
+  });
+
   it('rejects string-only operators on non-string fields', () => {
     const schema = getQueryInput(model);
 

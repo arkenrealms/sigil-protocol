@@ -220,20 +220,36 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
    *   - a full operator object: { equals, in, lt, ... }
    *   - OR a raw value shorthand: 'foo'  -> { equals: 'foo' }
    */
+  const unwrapFieldSchema = (field: zod.ZodTypeAny): zod.ZodTypeAny => {
+    let current: zod.ZodTypeAny = field;
+
+    while (
+      current instanceof zod.ZodOptional ||
+      current instanceof zod.ZodNullable ||
+      current instanceof zod.ZodDefault ||
+      current instanceof zod.ZodEffects
+    ) {
+      current = (current as any)._def.innerType ?? (current as any)._def.schema;
+    }
+
+    return current;
+  };
+
   const makeFieldFilter = (value: zod.ZodTypeAny) => {
-    const isStringField = value instanceof zod.ZodString;
+    const normalizedValue = unwrapFieldSchema(value);
+    const isStringField = normalizedValue instanceof zod.ZodString;
 
     const opsSchema: zod.ZodTypeAny = zod.lazy(() =>
       zod
         .object({
-          equals: value.optional(),
-          not: zod.union([value, opsSchema]).optional(),
-          in: zod.array(value).optional(),
-          notIn: zod.array(value).optional(),
-          lt: value.optional(),
-          lte: value.optional(),
-          gt: value.optional(),
-          gte: value.optional(),
+          equals: normalizedValue.optional(),
+          not: zod.union([normalizedValue, opsSchema]).optional(),
+          in: zod.array(normalizedValue).optional(),
+          notIn: zod.array(normalizedValue).optional(),
+          lt: normalizedValue.optional(),
+          lte: normalizedValue.optional(),
+          gt: normalizedValue.optional(),
+          gte: normalizedValue.optional(),
           ...(isStringField
             ? {
                 contains: zod.string().optional(),

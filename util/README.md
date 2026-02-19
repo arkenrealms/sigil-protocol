@@ -14,4 +14,5 @@ Shared schema helpers for Sigil protocol routers.
 - Scalar shorthand now correctly preserves non-plain object values (for example `Date`) by mapping them to `{ equals: value }` instead of treating them like operator envelopes.
 - String-filter `mode` is constrained to Prisma-compatible values (`default` | `insensitive`) to reject unsupported options early.
 - String-only operators (`contains` / `startsWith` / `endsWith` / `mode`) are now only accepted on string fields to fail fast before invalid Prisma query construction on numeric/date fields.
+- Optional/nullable/default-wrapped string fields are unwrapped before filter generation, so valid string operators continue to work on fields like `z.string().optional()`.
 - `orderBy` accepts both a single object and Prisma-style arrays of objects (e.g. `[{ level: 'desc' }, { name: 'asc' }]`).
