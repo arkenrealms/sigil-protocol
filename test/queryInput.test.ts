@@ -169,6 +169,15 @@ describe('getQueryInput', () => {
     expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
   });
 
+  it('normalizes uppercase orderBy directions from legacy clients', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      orderBy: [{ level: 'DESC' as any }, { name: 'ASC' as any }],
+    });
+
+    expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
+  });
+
   it('rejects invalid orderBy direction values', () => {
     const schema = getQueryInput(model);
 

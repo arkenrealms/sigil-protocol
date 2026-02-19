@@ -11,4 +11,5 @@
 - Adds regression coverage for optional string fields to ensure wrapped string schemas (`z.string().optional()`) still accept string operators.
 - Validates Date shorthand filters are preserved as `{ equals: Date }` instead of being dropped when non-plain object values are provided.
 - Validates `orderBy` parsing supports Prisma-style array envelopes and rejects unsupported direction values.
+- Adds compatibility coverage for uppercase sort directions (`ASC`/`DESC`) to ensure parsed `orderBy` output is normalized to lowercase Prisma directions.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

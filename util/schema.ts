@@ -333,6 +333,11 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       : (schema as any).optional()
     : schema.optional(); // arrays: allow full array
 
+  const orderByDirection = zod.preprocess(
+    (input) => (typeof input === "string" ? input.toLowerCase() : input),
+    zod.enum(["asc", "desc"]),
+  );
+
   const querySchema = zod
     .object({
       data: dataSchema,
@@ -351,8 +356,8 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
 
       orderBy: zod
         .union([
-          zod.record(zod.enum(["asc", "desc"])),
-          zod.array(zod.record(zod.enum(["asc", "desc"]))),
+          zod.record(orderByDirection),
+          zod.array(zod.record(orderByDirection)),
         ])
         .optional(),
       include: zod.record(zod.boolean()).optional(),
