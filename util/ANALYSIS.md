@@ -9,6 +9,7 @@
 - `createPrismaWhereSchema` now accepts single-object logical filters (`NOT`/`AND`/`OR`) in addition to arrays, matching common Prisma-style payloads.
 - Field-level `not` now supports nested operator objects (not only scalar values), which aligns with Prisma filter semantics and avoids rejecting valid caller payloads.
 - Tightened string-filter `mode` to Prisma-compatible enum values (`default`/`insensitive`) instead of unrestricted strings, preventing silent acceptance of unsupported modes.
+- Scoped string-only operators (`contains` / `startsWith` / `endsWith` / `mode`) to string fields only; this prevents invalid filter payloads from being accepted for numeric/date fields and shifts failures to schema-parse time.
 - Added `orderBy` compatibility for both single-object and Prisma-style array envelopes, reducing query-shape rejection for multi-sort callers.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.

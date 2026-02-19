@@ -88,6 +88,30 @@ describe('getQueryInput', () => {
     expect(parsed?.where?.name?.mode).toBe('insensitive');
   });
 
+  it('rejects string-only operators on non-string fields', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          level: {
+            contains: '2',
+          },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          createdAt: {
+            mode: 'insensitive',
+          },
+        },
+      }),
+    ).toThrow();
+  });
+
   it('preserves Date shorthand filters as equals clauses', () => {
     const schema = getQueryInput(model);
     const now = new Date('2026-02-18T20:00:00.000Z');

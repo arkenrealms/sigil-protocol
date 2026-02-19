@@ -221,6 +221,8 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
    *   - OR a raw value shorthand: 'foo'  -> { equals: 'foo' }
    */
   const makeFieldFilter = (value: zod.ZodTypeAny) => {
+    const isStringField = value instanceof zod.ZodString;
+
     const opsSchema: zod.ZodTypeAny = zod.lazy(() =>
       zod
         .object({
@@ -232,12 +234,17 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
           lte: value.optional(),
           gt: value.optional(),
           gte: value.optional(),
-          contains: zod.string().optional(),
-          startsWith: zod.string().optional(),
-          endsWith: zod.string().optional(),
-          mode: zod.enum(["default", "insensitive"]).optional(),
+          ...(isStringField
+            ? {
+                contains: zod.string().optional(),
+                startsWith: zod.string().optional(),
+                endsWith: zod.string().optional(),
+                mode: zod.enum(["default", "insensitive"]).optional(),
+              }
+            : {}),
         })
-        .partial(),
+        .partial()
+        .strict(),
     );
 
     return zod
