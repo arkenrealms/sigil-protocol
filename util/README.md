@@ -12,3 +12,4 @@ Shared schema helpers for Sigil protocol routers.
 - `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or an array.
 - Field-level `not` filters accept both scalar shorthand values and nested operator objects (Prisma-compatible), e.g. `{ name: { not: { contains: 'foo' } } }`.
 - String-filter `mode` is constrained to Prisma-compatible values (`default` | `insensitive`) to reject unsupported options early.
+- `orderBy` accepts both a single object and Prisma-style arrays of objects (e.g. `[{ level: 'desc' }, { name: 'asc' }]`).

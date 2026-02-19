@@ -102,6 +102,26 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('supports Prisma-style orderBy arrays', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      orderBy: [{ level: 'desc' }, { name: 'asc' }],
+    });
+
+    expect(Array.isArray(parsed?.orderBy)).toBe(true);
+    expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
+  });
+
+  it('rejects invalid orderBy direction values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ level: 'descending' as any }],
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 

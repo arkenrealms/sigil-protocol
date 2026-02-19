@@ -10,3 +10,4 @@ Jest tests for protocol schema helpers.
 - Logical filter compatibility (`NOT` object shorthand)
 - Field-filter nested `not` operator compatibility (`name: { not: { contains: ... } }`)
 - String-filter `mode` validation (`default`/`insensitive` accepted; unsupported modes rejected)
+- `orderBy` compatibility (single object and Prisma-style array envelopes)
