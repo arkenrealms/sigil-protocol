@@ -106,7 +106,12 @@ const QueryWhereSchema = z.lazy(() =>
   }),
 );
 
-const QueryOrderBySchema = z.record(z.enum(["asc", "desc"]));
+const QueryOrderDirection = z.preprocess(
+  (value) => (typeof value === "string" ? value.toLowerCase() : value),
+  z.enum(["asc", "desc"]),
+);
+
+const QueryOrderBySchema = z.record(QueryOrderDirection);
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
@@ -351,8 +356,8 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
 
       orderBy: zod
         .union([
-          zod.record(zod.enum(["asc", "desc"])),
-          zod.array(zod.record(zod.enum(["asc", "desc"]))),
+          zod.record(QueryOrderDirection),
+          zod.array(zod.record(QueryOrderDirection)),
         ])
         .optional(),
       include: zod.record(zod.boolean()).optional(),

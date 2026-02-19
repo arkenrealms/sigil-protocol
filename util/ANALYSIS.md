@@ -12,5 +12,6 @@
 - Scoped string-only operators (`contains` / `startsWith` / `endsWith` / `mode`) to string fields only; this prevents invalid filter payloads from being accepted for numeric/date fields and shifts failures to schema-parse time.
 - Fixed optional/nullable/default/effects wrapper handling when inferring field type so optional string fields still expose valid string operators (previously `z.string().optional()` was misclassified and rejected `contains`/`mode`).
 - Added `orderBy` compatibility for both single-object and Prisma-style array envelopes, reducing query-shape rejection for multi-sort callers.
+- Added case-normalization for `orderBy` directions (`ASC`/`DESC` -> `asc`/`desc`) to reduce avoidable caller failures while preserving strict rejection for unknown values.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
