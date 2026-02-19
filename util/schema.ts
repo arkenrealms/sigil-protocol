@@ -107,7 +107,8 @@ const QueryWhereSchema = z.lazy(() =>
 );
 
 const QueryOrderDirection = z.preprocess(
-  (value) => (typeof value === "string" ? value.toLowerCase() : value),
+  (value) =>
+    typeof value === "string" ? value.trim().toLowerCase() : value,
   z.enum(["asc", "desc"]),
 );
 

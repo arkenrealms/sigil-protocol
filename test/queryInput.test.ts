@@ -178,6 +178,15 @@ describe('getQueryInput', () => {
     expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
   });
 
+  it('normalizes orderBy directions with surrounding whitespace', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      orderBy: [{ level: '  DESC  ' as any }, { name: '\tasc\n' as any }],
+    });
+
+    expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
+  });
+
   it('rejects invalid orderBy direction values', () => {
     const schema = getQueryInput(model);
 
