@@ -14,3 +14,4 @@ Jest tests for protocol schema helpers.
 - Optional string field compatibility (`z.string().optional()` supports `contains`/`mode`)
 - Date shorthand filter compatibility (`where: { createdAt: new Date(...) }` keeps `{ equals: Date }` semantics)
 - `orderBy` compatibility (single object and Prisma-style array envelopes)
+- `orderBy` direction normalization (`ASC`/`DESC` and padded values normalize to lowercase)
