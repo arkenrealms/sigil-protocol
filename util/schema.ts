@@ -119,32 +119,38 @@ const normalizeOrderDirection = (value: unknown) => {
   return value.trim().toLowerCase();
 };
 
+const isSafeRecordFieldKey = (field: unknown) => {
+  if (typeof field !== "string") {
+    return false;
+  }
+
+  const normalizedField = field.trim();
+  if (normalizedField.length === 0) {
+    return false;
+  }
+
+  const lowered = normalizedField.toLowerCase();
+  return (
+    lowered !== "__proto__" &&
+    lowered !== "prototype" &&
+    lowered !== "constructor"
+  );
+};
+
 const QueryOrderBySchema = z
   .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
   .refine((value) => Object.keys(value).length > 0, {
     message: "orderBy entries must include at least one sortable field",
   })
-  .refine(
-    (value) =>
-      Object.keys(value).every(
-        (field) => typeof field === "string" && field.trim().length > 0,
-      ),
-    {
-      message: "orderBy field names must be non-empty strings",
-    },
-  );
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "orderBy field names must be non-empty safe strings",
+  });
 
 const QueryBooleanFieldRecordSchema = z
   .record(z.boolean())
-  .refine(
-    (value) =>
-      Object.keys(value).every(
-        (field) => typeof field === "string" && field.trim().length > 0,
-      ),
-    {
-      message: "include/select field names must be non-empty strings",
-    },
-  );
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "include/select field names must be non-empty safe strings",
+  });
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),

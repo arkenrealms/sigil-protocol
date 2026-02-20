@@ -15,4 +15,5 @@
 - Adds direct `Query` coverage so logical operators (`AND`/`OR`/`NOT`) accept both single-object and array envelopes.
 - Adds no-op guard coverage to reject empty logical arrays (`AND`/`OR`), preventing ambiguous Prisma filter payloads.
 - Adds regression coverage for blank-key `include`/`select` envelopes so malformed projection maps fail in schema parsing instead of leaking into resolver/database query construction.
+- Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

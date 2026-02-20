@@ -22,3 +22,4 @@ Shared schema helpers for Sigil protocol routers.
 - `orderBy` now also rejects empty arrays (`[]`) so callers must provide at least one concrete sort clause when using array form.
 - `orderBy` now rejects blank/whitespace field keys (for example `{ "": "asc" }`) to prevent invalid sort envelopes from reaching Prisma.
 - `include`/`select` now reject blank/whitespace field keys (for example `{ " ": true }`) so invalid projection envelopes fail fast during schema parsing.
+- `orderBy`/`include`/`select` now also reject reserved prototype keys (`__proto__`, `prototype`, `constructor`) to avoid passing prototype-pollution-shaped payloads into downstream query processing.

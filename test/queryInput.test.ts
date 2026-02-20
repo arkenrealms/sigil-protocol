@@ -338,4 +338,26 @@ describe('getQueryInput', () => {
     expect(parsed?.include).toEqual({ owner: true });
     expect(parsed?.select).toEqual({ name: true });
   });
+
+  it('rejects reserved prototype-pollution field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ __proto__: 'asc' } as any],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        include: { constructor: true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        select: { prototype: true },
+      }),
+    ).toThrow();
+  });
 });
