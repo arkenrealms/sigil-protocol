@@ -18,3 +18,4 @@ Shared schema helpers for Sigil protocol routers.
 - Optional/nullable/default-wrapped string fields are unwrapped before filter generation, so valid string operators continue to work on fields like `z.string().optional()`.
 - `orderBy` accepts both a single object and Prisma-style arrays of objects (e.g. `[{ level: 'desc' }, { name: 'asc' }]`).
 - `orderBy` directions are normalized with trim + lowercase in both `Query` and `getQueryInput`, so `ASC`/`DESC` and padded variants are accepted.
+- `orderBy` now rejects empty objects (`{}`) to prevent no-op/ambiguous sort envelopes.

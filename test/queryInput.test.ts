@@ -188,6 +188,22 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty orderBy objects', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{}],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        orderBy: {},
+      }),
+    ).toThrow();
+  });
+
   it('Query accepts single-object logical clauses for Prisma compatibility', () => {
     const parsed = Query.parse({
       where: {

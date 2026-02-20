@@ -13,6 +13,7 @@
 - Fixed optional/nullable/default/effects wrapper handling when inferring field type so optional string fields still expose valid string operators (previously `z.string().optional()` was misclassified and rejected `contains`/`mode`).
 - Added `orderBy` compatibility for both single-object and Prisma-style array envelopes, reducing query-shape rejection for multi-sort callers.
 - Added `orderBy` direction normalization (trim + lowercase) so uppercase/padded directions like `" DESC "` are accepted and normalized while unsupported directions still fail validation.
+- Hardened `orderBy` clause validation to reject empty sort objects (`{}`), preventing ambiguous/no-op sort payloads from silently passing schema checks.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
 - Hardened exported `Query` logical clause compatibility: `AND`/`OR`/`NOT` now accept either a single nested where object or an array, matching `createPrismaWhereSchema` and Prisma-style payloads.

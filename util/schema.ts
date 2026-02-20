@@ -116,9 +116,11 @@ const normalizeOrderDirection = (value: unknown) => {
   return value.trim().toLowerCase();
 };
 
-const QueryOrderBySchema = z.record(
-  z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])),
-);
+const QueryOrderBySchema = z
+  .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "orderBy entries must include at least one sortable field",
+  });
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
@@ -361,21 +363,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
         ? whereSchema.optional()
         : zod.undefined().optional(),
 
-      orderBy: zod
-        .union([
-          zod.record(
-            zod.preprocess(normalizeOrderDirection, zod.enum(["asc", "desc"])),
-          ),
-          zod.array(
-            zod.record(
-              zod.preprocess(
-                normalizeOrderDirection,
-                zod.enum(["asc", "desc"]),
-              ),
-            ),
-          ),
-        ])
-        .optional(),
+      orderBy: zod.union([QueryOrderBySchema, zod.array(QueryOrderBySchema)]).optional(),
       include: zod.record(zod.boolean()).optional(),
       select: zod.record(zod.boolean()).optional(),
     })
