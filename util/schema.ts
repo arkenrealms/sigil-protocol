@@ -93,18 +93,20 @@ const QueryFilterOperators = z.object({
   mode: z.enum(["default", "insensitive"]).optional(),
 });
 
-const QueryWhereSchema = z.lazy(() =>
-  z.object({
-    AND: z.array(QueryWhereSchema).optional(),
-    OR: z.array(QueryWhereSchema).optional(),
-    NOT: z.array(QueryWhereSchema).optional(),
+const QueryWhereSchema = z.lazy(() => {
+  const logicalClause = z.union([QueryWhereSchema, z.array(QueryWhereSchema)]);
+
+  return z.object({
+    AND: logicalClause.optional(),
+    OR: logicalClause.optional(),
+    NOT: logicalClause.optional(),
     id: QueryFilterOperators.optional(),
     key: QueryFilterOperators.optional(),
     name: QueryFilterOperators.optional(),
     email: QueryFilterOperators.optional(),
     status: QueryFilterOperators.optional(),
-  }),
-);
+  });
+});
 
 const normalizeOrderDirection = (value: unknown) => {
   if (typeof value !== "string") {

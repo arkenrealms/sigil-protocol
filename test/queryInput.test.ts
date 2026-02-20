@@ -1,5 +1,5 @@
 // arken/packages/sigil-protocol/test/queryInput.test.ts
-import { getQueryInput, z } from '../util/schema';
+import { Query, getQueryInput, z } from '../util/schema';
 
 describe('getQueryInput', () => {
   const model = z.object({
@@ -186,6 +186,38 @@ describe('getQueryInput', () => {
         orderBy: [{ level: 'descending' as any }],
       }),
     ).toThrow();
+  });
+
+  it('Query accepts single-object logical clauses for Prisma compatibility', () => {
+    const parsed = Query.parse({
+      where: {
+        NOT: {
+          name: { equals: 'mage' },
+        },
+      },
+    });
+
+    expect(Array.isArray(parsed.where?.NOT)).toBe(false);
+    expect((parsed.where?.NOT as any)?.name?.equals).toBe('mage');
+  });
+
+  it('Query accepts array logical clauses and preserves mixed nesting', () => {
+    const parsed = Query.parse({
+      where: {
+        OR: [
+          { status: { equals: 'Active' } },
+          {
+            AND: {
+              name: { contains: 'arch' },
+            },
+          },
+        ],
+      },
+    });
+
+    expect(Array.isArray(parsed.where?.OR)).toBe(true);
+    expect((parsed.where?.OR as any)?.[0]?.status?.equals).toBe('Active');
+    expect(Array.isArray((parsed.where?.OR as any)?.[1]?.AND)).toBe(false);
   });
 
   it('rejects negative pagination values', () => {

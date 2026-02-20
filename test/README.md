@@ -15,3 +15,4 @@ Jest tests for protocol schema helpers.
 - Date shorthand filter compatibility (`where: { createdAt: new Date(...) }` keeps `{ equals: Date }` semantics)
 - `orderBy` compatibility (single object and Prisma-style array envelopes)
 - `orderBy` direction normalization (`ASC`/`DESC` and padded values normalize to lowercase)
+- Exported `Query` logical clause compatibility (`AND`/`OR`/`NOT` accept object and array envelopes)
