@@ -221,12 +221,18 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
-  it('rejects blank orderBy field keys', () => {
+  it('rejects blank or padded orderBy field keys', () => {
     const schema = getQueryInput(model);
 
     expect(() =>
       schema.parse({
         orderBy: [{ '': 'asc' }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ ' name ': 'asc' }],
       }),
     ).toThrow();
 
@@ -306,7 +312,7 @@ describe('getQueryInput', () => {
     expect(() => schema.parse({ limit: 3.8 })).toThrow();
   });
 
-  it('rejects blank include/select field keys', () => {
+  it('rejects blank or padded include/select field keys', () => {
     const schema = getQueryInput(model);
 
     expect(() =>
@@ -317,7 +323,19 @@ describe('getQueryInput', () => {
 
     expect(() =>
       schema.parse({
+        include: { ' owner ': true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
         select: { '': false },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: { ' name ': true },
       }),
     ).toThrow();
 
@@ -399,12 +417,18 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
-  it('rejects blank or reserved cursor field keys', () => {
+  it('rejects blank, padded, or reserved cursor field keys', () => {
     const schema = getQueryInput(model);
 
     expect(() =>
       schema.parse({
         cursor: { ' ': 'abc' },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { ' id ': 'abc' },
       }),
     ).toThrow();
 

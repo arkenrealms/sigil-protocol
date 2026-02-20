@@ -129,6 +129,11 @@ const isSafeRecordFieldKey = (field: unknown) => {
     return false;
   }
 
+  // Reject whitespace-padded keys so parsed envelopes keep canonical field names.
+  if (normalizedField !== field) {
+    return false;
+  }
+
   const lowered = normalizedField.toLowerCase();
   return (
     lowered !== "__proto__" &&
