@@ -328,6 +328,28 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty include/select envelopes', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        include: {},
+      }),
+    ).toThrow();
+  });
+
   it('accepts include/select with non-empty field keys', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({

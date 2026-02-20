@@ -148,6 +148,9 @@ const QueryOrderBySchema = z
 
 const QueryBooleanFieldRecordSchema = z
   .record(z.boolean())
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "include/select entries must include at least one field",
+  })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
     message: "include/select field names must be non-empty safe strings",
   });
