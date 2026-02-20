@@ -221,6 +221,23 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects blank orderBy field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ '': 'asc' }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { name: { equals: 'archer' } },
+        orderBy: { ' ': 'desc' },
+      }),
+    ).toThrow();
+  });
+
   it('Query accepts single-object logical clauses for Prisma compatibility', () => {
     const parsed = Query.parse({
       where: {

@@ -20,3 +20,4 @@ Shared schema helpers for Sigil protocol routers.
 - `orderBy` directions are normalized with trim + lowercase in both `Query` and `getQueryInput`, so `ASC`/`DESC` and padded variants are accepted.
 - `orderBy` now rejects empty objects (`{}`) to prevent no-op/ambiguous sort envelopes.
 - `orderBy` now also rejects empty arrays (`[]`) so callers must provide at least one concrete sort clause when using array form.
+- `orderBy` now rejects blank/whitespace field keys (for example `{ "": "asc" }`) to prevent invalid sort envelopes from reaching Prisma.

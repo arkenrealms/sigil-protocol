@@ -123,7 +123,16 @@ const QueryOrderBySchema = z
   .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
   .refine((value) => Object.keys(value).length > 0, {
     message: "orderBy entries must include at least one sortable field",
-  });
+  })
+  .refine(
+    (value) =>
+      Object.keys(value).every(
+        (field) => typeof field === "string" && field.trim().length > 0,
+      ),
+    {
+      message: "orderBy field names must be non-empty strings",
+    },
+  );
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
