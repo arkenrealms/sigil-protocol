@@ -16,4 +16,5 @@ Jest tests for protocol schema helpers.
 - `orderBy` compatibility (single object and Prisma-style array envelopes)
 - `orderBy` direction normalization (`ASC`/`DESC` and padded values normalize to lowercase)
 - `orderBy` non-empty clause validation (reject empty objects and empty arrays)
-- Exported `Query` logical clause compatibility (`AND`/`OR`/`NOT` accept object and array envelopes)
+- Exported `Query` logical clause compatibility (`AND`/`OR`/`NOT` accept object and non-empty array envelopes)
+- Logical no-op protection (reject empty `AND`/`OR` arrays)

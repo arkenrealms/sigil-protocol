@@ -6,7 +6,7 @@
 - Added reciprocal normalization so `take`-only inputs are mirrored into `limit`, preserving backward-compatibility for callers still keyed on `limit`.
 - Added conflict normalization for mixed `take`/`limit` envelopes: `take` is canonical and `limit` is rewritten to match.
 - Added non-negative integer validation for `skip`/`take`/`limit` to fail fast on invalid pagination payloads before resolver/database execution.
-- `createPrismaWhereSchema` now accepts single-object logical filters (`NOT`/`AND`/`OR`) in addition to arrays, matching common Prisma-style payloads.
+- `createPrismaWhereSchema` now accepts single-object logical filters (`NOT`/`AND`/`OR`) in addition to non-empty arrays, matching common Prisma-style payloads while rejecting no-op empty arrays.
 - Field-level `not` now supports nested operator objects (not only scalar values), which aligns with Prisma filter semantics and avoids rejecting valid caller payloads.
 - Tightened string-filter `mode` to Prisma-compatible enum values (`default`/`insensitive`) instead of unrestricted strings, preventing silent acceptance of unsupported modes.
 - Scoped string-only operators (`contains` / `startsWith` / `endsWith` / `mode`) to string fields only; this prevents invalid filter payloads from being accepted for numeric/date fields and shifts failures to schema-parse time.

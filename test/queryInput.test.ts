@@ -253,6 +253,26 @@ describe('getQueryInput', () => {
     expect(Array.isArray((parsed.where?.OR as any)?.[1]?.AND)).toBe(false);
   });
 
+  it('rejects empty logical arrays to avoid no-op Prisma filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          OR: [],
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          AND: [],
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 

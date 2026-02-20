@@ -94,7 +94,10 @@ const QueryFilterOperators = z.object({
 });
 
 const QueryWhereSchema = z.lazy(() => {
-  const logicalClause = z.union([QueryWhereSchema, z.array(QueryWhereSchema)]);
+  const logicalClause = z.union([
+    QueryWhereSchema,
+    z.array(QueryWhereSchema).nonempty(),
+  ]);
 
   return z.object({
     AND: logicalClause.optional(),
@@ -311,7 +314,7 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
   );
   const logicalSchema = zod.union([
     nestedWhereSchema,
-    zod.array(nestedWhereSchema),
+    zod.array(nestedWhereSchema).nonempty(),
   ]);
 
   return zod.object({
