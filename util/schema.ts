@@ -93,27 +93,46 @@ const QueryFilterOperators = z.object({
   mode: z.enum(["default", "insensitive"]).optional(),
 });
 
-const QueryWhereSchema = z.lazy(() =>
-  z.object({
-    AND: z.array(QueryWhereSchema).optional(),
-    OR: z.array(QueryWhereSchema).optional(),
-    NOT: z.array(QueryWhereSchema).optional(),
+const QueryWhereSchema = z.lazy(() => {
+  const logicalClause = z.union([
+    QueryWhereSchema,
+    z.array(QueryWhereSchema).nonempty(),
+  ]);
+
+  return z.object({
+    AND: logicalClause.optional(),
+    OR: logicalClause.optional(),
+    NOT: logicalClause.optional(),
     id: QueryFilterOperators.optional(),
     key: QueryFilterOperators.optional(),
     name: QueryFilterOperators.optional(),
     email: QueryFilterOperators.optional(),
     status: QueryFilterOperators.optional(),
-  }),
-);
+  });
+});
 
-const QueryOrderBySchema = z.record(z.enum(["asc", "desc"]));
+const normalizeOrderDirection = (value: unknown) => {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return value.trim().toLowerCase();
+};
+
+const QueryOrderBySchema = z
+  .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "orderBy entries must include at least one sortable field",
+  });
 
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
   take: z.number().int().min(0).default(10).optional(),
   cursor: z.record(z.any()).optional(),
   where: QueryWhereSchema.optional(),
-  orderBy: z.union([QueryOrderBySchema, z.array(QueryOrderBySchema)]).optional(),
+  orderBy: z
+    .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
+    .optional(),
   include: z.record(z.boolean()).optional(),
   select: z.record(z.boolean()).optional(),
 });
@@ -295,7 +314,7 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
   );
   const logicalSchema = zod.union([
     nestedWhereSchema,
-    zod.array(nestedWhereSchema),
+    zod.array(nestedWhereSchema).nonempty(),
   ]);
 
   return zod.object({
@@ -350,10 +369,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
         : zod.undefined().optional(),
 
       orderBy: zod
-        .union([
-          zod.record(zod.enum(["asc", "desc"])),
-          zod.array(zod.record(zod.enum(["asc", "desc"]))),
-        ])
+        .union([QueryOrderBySchema, zod.array(QueryOrderBySchema).nonempty()])
         .optional(),
       include: zod.record(zod.boolean()).optional(),
       select: zod.record(zod.boolean()).optional(),

@@ -10,5 +10,7 @@
 - Validates string-only operators are rejected on non-string fields, preventing invalid Prisma filter construction for number/date fields.
 - Adds regression coverage for optional string fields to ensure wrapped string schemas (`z.string().optional()`) still accept string operators.
 - Validates Date shorthand filters are preserved as `{ equals: Date }` instead of being dropped when non-plain object values are provided.
-- Validates `orderBy` parsing supports Prisma-style array envelopes and rejects unsupported direction values.
+- Validates `orderBy` parsing supports Prisma-style array envelopes, normalizes uppercase/whitespace-padded directions, rejects unsupported direction values, rejects empty sort objects, and rejects empty sort arrays.
+- Adds direct `Query` coverage so logical operators (`AND`/`OR`/`NOT`) accept both single-object and array envelopes.
+- Adds no-op guard coverage to reject empty logical arrays (`AND`/`OR`), preventing ambiguous Prisma filter payloads.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

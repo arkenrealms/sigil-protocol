@@ -1,5 +1,5 @@
 // arken/packages/sigil-protocol/test/queryInput.test.ts
-import { getQueryInput, z } from '../util/schema';
+import { Query, getQueryInput, z } from '../util/schema';
 
 describe('getQueryInput', () => {
   const model = z.object({
@@ -169,12 +169,106 @@ describe('getQueryInput', () => {
     expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
   });
 
+  it('normalizes uppercase and padded orderBy directions', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      orderBy: [{ level: ' DESC ' }, { name: 'ASC' }],
+    });
+
+    expect(parsed?.orderBy).toEqual([{ level: 'desc' }, { name: 'asc' }]);
+  });
+
   it('rejects invalid orderBy direction values', () => {
     const schema = getQueryInput(model);
 
     expect(() =>
       schema.parse({
         orderBy: [{ level: 'descending' as any }],
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty orderBy objects', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{}],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        orderBy: {},
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty orderBy arrays', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { name: { equals: 'archer' } },
+        orderBy: [],
+      }),
+    ).toThrow();
+  });
+
+  it('Query accepts single-object logical clauses for Prisma compatibility', () => {
+    const parsed = Query.parse({
+      where: {
+        NOT: {
+          name: { equals: 'mage' },
+        },
+      },
+    });
+
+    expect(Array.isArray(parsed.where?.NOT)).toBe(false);
+    expect((parsed.where?.NOT as any)?.name?.equals).toBe('mage');
+  });
+
+  it('Query accepts array logical clauses and preserves mixed nesting', () => {
+    const parsed = Query.parse({
+      where: {
+        OR: [
+          { status: { equals: 'Active' } },
+          {
+            AND: {
+              name: { contains: 'arch' },
+            },
+          },
+        ],
+      },
+    });
+
+    expect(Array.isArray(parsed.where?.OR)).toBe(true);
+    expect((parsed.where?.OR as any)?.[0]?.status?.equals).toBe('Active');
+    expect(Array.isArray((parsed.where?.OR as any)?.[1]?.AND)).toBe(false);
+  });
+
+  it('rejects empty logical arrays to avoid no-op Prisma filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          OR: [],
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          AND: [],
+        },
       }),
     ).toThrow();
   });

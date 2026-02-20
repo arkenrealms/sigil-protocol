@@ -9,10 +9,14 @@ Shared schema helpers for Sigil protocol routers.
 - When only `take` is provided, parsing mirrors it into `limit` to preserve legacy callers that still read `limit`.
 - If both `take` and `limit` are provided but differ, `take` is treated as canonical and `limit` is normalized to match.
 - Pagination fields (`skip`/`take`/`limit`) are validated as non-negative integers to prevent invalid downstream query envelopes.
-- `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or an array.
+- `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or a non-empty array.
+- Exported `Query` now mirrors that behavior: logical operators accept either a single where object or a non-empty array.
 - Field-level `not` filters accept both scalar shorthand values and nested operator objects (Prisma-compatible), e.g. `{ name: { not: { contains: 'foo' } } }`.
 - Scalar shorthand now correctly preserves non-plain object values (for example `Date`) by mapping them to `{ equals: value }` instead of treating them like operator envelopes.
 - String-filter `mode` is constrained to Prisma-compatible values (`default` | `insensitive`) to reject unsupported options early.
 - String-only operators (`contains` / `startsWith` / `endsWith` / `mode`) are now only accepted on string fields to fail fast before invalid Prisma query construction on numeric/date fields.
 - Optional/nullable/default-wrapped string fields are unwrapped before filter generation, so valid string operators continue to work on fields like `z.string().optional()`.
 - `orderBy` accepts both a single object and Prisma-style arrays of objects (e.g. `[{ level: 'desc' }, { name: 'asc' }]`).
+- `orderBy` directions are normalized with trim + lowercase in both `Query` and `getQueryInput`, so `ASC`/`DESC` and padded variants are accepted.
+- `orderBy` now rejects empty objects (`{}`) to prevent no-op/ambiguous sort envelopes.
+- `orderBy` now also rejects empty arrays (`[]`) so callers must provide at least one concrete sort clause when using array form.
