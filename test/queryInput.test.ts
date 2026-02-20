@@ -382,4 +382,45 @@ describe('getQueryInput', () => {
       }),
     ).toThrow();
   });
+
+  it('rejects empty cursor envelopes', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        cursor: {},
+      }),
+    ).toThrow();
+  });
+
+  it('rejects blank or reserved cursor field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: { ' ': 'abc' },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { __proto__: 'abc' } as any,
+      }),
+    ).toThrow();
+  });
+
+  it('accepts cursor with non-empty safe field keys', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      cursor: { id: '507f1f77bcf86cd799439011' },
+    });
+
+    expect(parsed?.cursor).toEqual({ id: '507f1f77bcf86cd799439011' });
+  });
 });

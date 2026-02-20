@@ -22,3 +22,4 @@ Jest tests for protocol schema helpers.
 - Projection-key validation (`include`/`select` reject blank field names)
 - Projection no-op guard (`include`/`select` reject empty objects)
 - Reserved-key validation (`orderBy`/`include`/`select` reject `__proto__`/`prototype`/`constructor`)
+- Cursor envelope validation (reject empty/blank/reserved-key cursors; accept safe non-empty cursor fields)

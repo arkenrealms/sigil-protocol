@@ -155,10 +155,19 @@ const QueryBooleanFieldRecordSchema = z
     message: "include/select field names must be non-empty safe strings",
   });
 
+const QueryCursorSchema = z
+  .record(z.any())
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "cursor entries must include at least one field",
+  })
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "cursor field names must be non-empty safe strings",
+  });
+
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
   take: z.number().int().min(0).default(10).optional(),
-  cursor: z.record(z.any()).optional(),
+  cursor: QueryCursorSchema.optional(),
   where: QueryWhereSchema.optional(),
   orderBy: z
     .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
@@ -391,7 +400,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       // Accept both `take` (Prisma-style) and legacy `limit`.
       take: zod.number().int().min(0).default(10).optional(),
       limit: zod.number().int().min(0).default(10).optional(),
-      cursor: zod.record(zod.any()).optional(),
+      cursor: QueryCursorSchema.optional(),
 
       // only valid for object schemas
       where: isObjectSchema
