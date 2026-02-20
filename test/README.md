@@ -19,6 +19,7 @@ Jest tests for protocol schema helpers.
 - `orderBy` field-key validation (reject blank/whitespace sort keys)
 - Exported `Query` logical clause compatibility (`AND`/`OR`/`NOT` accept object and non-empty array envelopes)
 - Logical no-op protection (reject empty `AND`/`OR` arrays)
+- `where` no-op protection (reject empty `where: {}` envelopes)
 - Projection-key validation (`include`/`select` reject blank/whitespace-padded field names)
 - Projection no-op guard (`include`/`select` reject empty objects)
 - Reserved-key validation (`orderBy`/`include`/`select` reject `__proto__`/`prototype`/`constructor`)

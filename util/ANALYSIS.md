@@ -21,6 +21,7 @@
 - Added reserved-key guards for record-based envelopes (`orderBy`/`include`/`select`) to reject `__proto__`/`prototype`/`constructor`, reducing prototype-pollution-shaped input risk before resolver/database handling.
 - Tightened record-key validation to reject whitespace-padded field names (e.g. `" name "`) for `orderBy`/`include`/`select`/`cursor`, because these payloads are malformed and should fail before reaching resolver/database logic.
 - Applied the same record-envelope hardening to `cursor` (`Query` + `getQueryInput`): it now rejects empty objects and blank/reserved/padded field keys so malformed cursor payloads fail at schema-parse time instead of drifting into pagination code paths.
+- Added explicit non-empty `where` envelope guards in both `Query` and recursive `createPrismaWhereSchema`, because `{}` is an ambiguous no-op filter that should fail fast before resolver/database execution.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
 - Hardened exported `Query` logical clause compatibility: `AND`/`OR`/`NOT` now accept either a single nested where object or an array, matching `createPrismaWhereSchema` and Prisma-style payloads.

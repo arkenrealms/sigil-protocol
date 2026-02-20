@@ -14,6 +14,7 @@
 - Adds regression coverage that rejects blank/whitespace `orderBy` field keys so invalid sort envelopes fail before resolver/database execution.
 - Adds direct `Query` coverage so logical operators (`AND`/`OR`/`NOT`) accept both single-object and array envelopes.
 - Adds no-op guard coverage to reject empty logical arrays (`AND`/`OR`), preventing ambiguous Prisma filter payloads.
+- Adds regression coverage for empty `where` envelopes so `{}` fails schema parsing instead of propagating as a silent no-op filter.
 - Adds regression coverage for blank/padded-key `include`/`select` envelopes so malformed projection maps fail in schema parsing instead of leaking into resolver/database query construction.
 - Adds regression coverage for empty `include`/`select` envelopes so no-op projection objects are rejected at parse time instead of silently propagating.
 - Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.

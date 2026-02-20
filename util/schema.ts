@@ -93,22 +93,29 @@ const QueryFilterOperators = z.object({
   mode: z.enum(["default", "insensitive"]).optional(),
 });
 
+const hasAtLeastOneRecordField = (value: Record<string, unknown>) =>
+  Object.keys(value).length > 0;
+
 const QueryWhereSchema = z.lazy(() => {
   const logicalClause = z.union([
     QueryWhereSchema,
     z.array(QueryWhereSchema).nonempty(),
   ]);
 
-  return z.object({
-    AND: logicalClause.optional(),
-    OR: logicalClause.optional(),
-    NOT: logicalClause.optional(),
-    id: QueryFilterOperators.optional(),
-    key: QueryFilterOperators.optional(),
-    name: QueryFilterOperators.optional(),
-    email: QueryFilterOperators.optional(),
-    status: QueryFilterOperators.optional(),
-  });
+  return z
+    .object({
+      AND: logicalClause.optional(),
+      OR: logicalClause.optional(),
+      NOT: logicalClause.optional(),
+      id: QueryFilterOperators.optional(),
+      key: QueryFilterOperators.optional(),
+      name: QueryFilterOperators.optional(),
+      email: QueryFilterOperators.optional(),
+      status: QueryFilterOperators.optional(),
+    })
+    .refine(hasAtLeastOneRecordField, {
+      message: "where entries must include at least one filter clause",
+    });
 });
 
 const normalizeOrderDirection = (value: unknown) => {
@@ -144,7 +151,7 @@ const isSafeRecordFieldKey = (field: unknown) => {
 
 const QueryOrderBySchema = z
   .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
-  .refine((value) => Object.keys(value).length > 0, {
+  .refine(hasAtLeastOneRecordField, {
     message: "orderBy entries must include at least one sortable field",
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
@@ -153,7 +160,7 @@ const QueryOrderBySchema = z
 
 const QueryBooleanFieldRecordSchema = z
   .record(z.boolean())
-  .refine((value) => Object.keys(value).length > 0, {
+  .refine(hasAtLeastOneRecordField, {
     message: "include/select entries must include at least one field",
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
@@ -162,7 +169,7 @@ const QueryBooleanFieldRecordSchema = z
 
 const QueryCursorSchema = z
   .record(z.any())
-  .refine((value) => Object.keys(value).length > 0, {
+  .refine(hasAtLeastOneRecordField, {
     message: "cursor entries must include at least one field",
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
@@ -266,7 +273,7 @@ export const Query = z.object({
 export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
   modelSchema: zod.ZodObject<T>,
   depth: number = 3,
-): zod.ZodObject<any> => {
+): zod.ZodTypeAny => {
   const fields = modelSchema.shape;
 
   const isPlainObject = (value: unknown) => {
@@ -350,6 +357,8 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     // Base case: no AND/OR/NOT
     return zod.object({
       ...fieldFilters,
+    }).refine(hasAtLeastOneRecordField, {
+      message: "where entries must include at least one filter clause",
     });
   }
 
@@ -366,6 +375,8 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     OR: logicalSchema.optional(),
     NOT: logicalSchema.optional(),
     ...fieldFilters,
+  }).refine(hasAtLeastOneRecordField, {
+    message: "where entries must include at least one filter clause",
   });
 };
 

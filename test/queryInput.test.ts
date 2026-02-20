@@ -296,6 +296,22 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty where envelopes to avoid no-op filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {},
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
