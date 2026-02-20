@@ -305,4 +305,37 @@ describe('getQueryInput', () => {
     expect(() => schema.parse({ take: 2.5 })).toThrow();
     expect(() => schema.parse({ limit: 3.8 })).toThrow();
   });
+
+  it('rejects blank include/select field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: { ' ': true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: { '': false },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        include: { '\t': true },
+      }),
+    ).toThrow();
+  });
+
+  it('accepts include/select with non-empty field keys', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      include: { owner: true },
+      select: { name: true },
+    });
+
+    expect(parsed?.include).toEqual({ owner: true });
+    expect(parsed?.select).toEqual({ name: true });
+  });
 });

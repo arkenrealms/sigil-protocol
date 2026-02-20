@@ -134,6 +134,18 @@ const QueryOrderBySchema = z
     },
   );
 
+const QueryBooleanFieldRecordSchema = z
+  .record(z.boolean())
+  .refine(
+    (value) =>
+      Object.keys(value).every(
+        (field) => typeof field === "string" && field.trim().length > 0,
+      ),
+    {
+      message: "include/select field names must be non-empty strings",
+    },
+  );
+
 export const Query = z.object({
   skip: z.number().int().min(0).default(0).optional(),
   take: z.number().int().min(0).default(10).optional(),
@@ -142,8 +154,8 @@ export const Query = z.object({
   orderBy: z
     .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
     .optional(),
-  include: z.record(z.boolean()).optional(),
-  select: z.record(z.boolean()).optional(),
+  include: QueryBooleanFieldRecordSchema.optional(),
+  select: QueryBooleanFieldRecordSchema.optional(),
 });
 
 // // Operators for filtering in a Prisma-like way
@@ -380,8 +392,8 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       orderBy: zod
         .union([QueryOrderBySchema, zod.array(QueryOrderBySchema).nonempty()])
         .optional(),
-      include: zod.record(zod.boolean()).optional(),
-      select: zod.record(zod.boolean()).optional(),
+      include: QueryBooleanFieldRecordSchema.optional(),
+      select: QueryBooleanFieldRecordSchema.optional(),
     })
     .partial()
     .transform((query) => {

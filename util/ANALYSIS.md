@@ -16,6 +16,7 @@
 - Hardened `orderBy` clause validation to reject empty sort objects (`{}`), preventing ambiguous/no-op sort payloads from silently passing schema checks.
 - Extended `orderBy` validation to reject empty array envelopes (`[]`) for both `Query` and `getQueryInput`, so multi-sort callers must send at least one clause instead of an ambiguous no-op.
 - Added an `orderBy` field-name guard that rejects blank/whitespace keys (e.g. `{ "": "asc" }`), because these envelopes pass shape validation but are invalid Prisma sort clauses and should fail fast at schema-parse time.
+- Added matching blank-key guards for `include`/`select` projection envelopes because users can accidentally send whitespace keys from query builders; failing early at schema parse-time avoids forwarding malformed projection maps into resolver/database paths.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
 - Hardened exported `Query` logical clause compatibility: `AND`/`OR`/`NOT` now accept either a single nested where object or an array, matching `createPrismaWhereSchema` and Prisma-style payloads.
