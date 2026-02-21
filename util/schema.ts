@@ -119,6 +119,7 @@ const QueryWhereSchema = z.lazy(() => {
       email: QueryFilterOperators.optional(),
       status: QueryFilterOperators.optional(),
     })
+    .strict()
     .refine(hasAtLeastOneRecordField, {
       message: "where entries must include at least one filter clause",
     });
@@ -364,11 +365,14 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
 
   if (depth <= 0) {
     // Base case: no AND/OR/NOT
-    return zod.object({
-      ...fieldFilters,
-    }).refine(hasAtLeastOneRecordField, {
-      message: "where entries must include at least one filter clause",
-    });
+    return zod
+      .object({
+        ...fieldFilters,
+      })
+      .strict()
+      .refine(hasAtLeastOneRecordField, {
+        message: "where entries must include at least one filter clause",
+      });
   }
 
   const nestedWhereSchema = zod.lazy(() =>
@@ -379,14 +383,17 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     zod.array(nestedWhereSchema).nonempty(),
   ]);
 
-  return zod.object({
-    AND: logicalSchema.optional(),
-    OR: logicalSchema.optional(),
-    NOT: logicalSchema.optional(),
-    ...fieldFilters,
-  }).refine(hasAtLeastOneRecordField, {
-    message: "where entries must include at least one filter clause",
-  });
+  return zod
+    .object({
+      AND: logicalSchema.optional(),
+      OR: logicalSchema.optional(),
+      NOT: logicalSchema.optional(),
+      ...fieldFilters,
+    })
+    .strict()
+    .refine(hasAtLeastOneRecordField, {
+      message: "where entries must include at least one filter clause",
+    });
 };
 
 export const getQueryOutput = <T extends zod.ZodTypeAny>(data: T) => {

@@ -332,6 +332,36 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects unknown where field keys instead of silently stripping them', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          unknownField: { equals: 'arch' },
+        } as any,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { equals: 'arch' },
+          typoField: { equals: 'ranger' },
+        } as any,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { equals: 'Active' },
+          extraneous: { equals: 'nope' },
+        } as any,
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
