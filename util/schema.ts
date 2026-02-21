@@ -82,8 +82,8 @@ const QueryFilterOperators = z
   .object({
     equals: z.any().optional(),
     not: z.any().optional(),
-    in: z.array(z.any()).optional(),
-    notIn: z.array(z.any()).optional(),
+    in: z.array(z.any()).nonempty().optional(),
+    notIn: z.array(z.any()).nonempty().optional(),
     lt: z.any().optional(),
     lte: z.any().optional(),
     gt: z.any().optional(),
@@ -323,8 +323,8 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         .object({
           equals: normalizedValue.optional(),
           not: zod.union([normalizedValue, opsSchema]).optional(),
-          in: zod.array(normalizedValue).optional(),
-          notIn: zod.array(normalizedValue).optional(),
+          in: zod.array(normalizedValue).nonempty().optional(),
+          notIn: zod.array(normalizedValue).nonempty().optional(),
           lt: normalizedValue.optional(),
           lte: normalizedValue.optional(),
           gt: normalizedValue.optional(),

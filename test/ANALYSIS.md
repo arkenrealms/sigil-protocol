@@ -22,4 +22,5 @@
 - Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.
 - Adds cursor-envelope regression coverage so empty cursor objects and blank/padded/reserved cursor keys fail during schema parsing, while valid non-empty cursor objects continue to parse cleanly.
 - Adds regression coverage that top-level query envelopes are strict: unknown/typo keys now fail in both `getQueryInput` and exported `Query` parsing instead of being silently stripped.
+- Adds regression coverage that rejects empty `in`/`notIn` arrays in `where` filters so no-op membership predicates fail before resolver/database execution.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

@@ -332,6 +332,34 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty in/notIn arrays in where filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { in: [] },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          level: { notIn: [] },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { in: [] },
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects unknown where field keys instead of silently stripping them', () => {
     const schema = getQueryInput(model);
 
