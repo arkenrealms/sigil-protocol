@@ -576,6 +576,27 @@ describe('getQueryInput', () => {
     expect(parsed?.cursor).toEqual({ id: '507f1f77bcf86cd799439011' });
   });
 
+  it('supports Query limit alias and normalizes it into take', () => {
+    const parsed = Query.parse({
+      where: { status: { equals: 'Active' } },
+      limit: 15,
+    });
+
+    expect(parsed.limit).toBe(15);
+    expect(parsed.take).toBe(15);
+  });
+
+  it('normalizes conflicting Query take/limit values to take as canonical', () => {
+    const parsed = Query.parse({
+      where: { status: { equals: 'Active' } },
+      take: 9,
+      limit: 3,
+    });
+
+    expect(parsed.take).toBe(9);
+    expect(parsed.limit).toBe(9);
+  });
+
   it('rejects unknown top-level query envelope keys', () => {
     const schema = getQueryInput(model);
 

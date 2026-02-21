@@ -4,6 +4,7 @@ Shared schema helpers for Sigil protocol routers.
 
 ## Notes
 - `getQueryInput` accepts both `take` and `limit` pagination keys.
+- Exported `Query` also accepts both `take` and `limit` for compatibility, and normalizes to `take` as canonical when both are provided.
 - Prefer `take` for Prisma-style callers; keep `limit` for compatibility.
 - When only `limit` is provided, parsing now mirrors it into `take` for downstream Prisma-style consumers.
 - When only `take` is provided, parsing mirrors it into `limit` to preserve legacy callers that still read `limit`.

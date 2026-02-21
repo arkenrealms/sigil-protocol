@@ -221,6 +221,7 @@ export const Query = z
   .object({
     skip: z.number().int().min(0).default(0).optional(),
     take: z.number().int().min(0).default(10).optional(),
+    limit: z.number().int().min(0).default(10).optional(),
     cursor: QueryCursorSchema.optional(),
     where: QueryWhereSchema.optional(),
     orderBy: z
@@ -229,7 +230,26 @@ export const Query = z
     include: QueryBooleanFieldRecordSchema.optional(),
     select: QueryBooleanFieldRecordSchema.optional(),
   })
-  .strict();
+  .strict()
+  .transform((query) => {
+    if (query.take === undefined && query.limit !== undefined) {
+      return { ...query, take: query.limit };
+    }
+
+    if (query.take !== undefined && query.limit === undefined) {
+      return { ...query, limit: query.take };
+    }
+
+    if (
+      query.take !== undefined &&
+      query.limit !== undefined &&
+      query.take !== query.limit
+    ) {
+      return { ...query, limit: query.take };
+    }
+
+    return query;
+  });
 
 // // Operators for filtering in a Prisma-like way
 // type PrismaFilterOperators<T extends ZodTypeAny> = zod.ZodObject<
