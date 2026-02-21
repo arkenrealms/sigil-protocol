@@ -78,23 +78,29 @@ export const Entity = z
 
 export type Entity = zod.infer<typeof Entity>;
 
-const QueryFilterOperators = z.object({
-  equals: z.any().optional(),
-  not: z.any().optional(),
-  in: z.array(z.any()).optional(),
-  notIn: z.array(z.any()).optional(),
-  lt: z.any().optional(),
-  lte: z.any().optional(),
-  gt: z.any().optional(),
-  gte: z.any().optional(),
-  contains: z.string().optional(),
-  startsWith: z.string().optional(),
-  endsWith: z.string().optional(),
-  mode: z.enum(["default", "insensitive"]).optional(),
-});
+const QueryFilterOperators = z
+  .object({
+    equals: z.any().optional(),
+    not: z.any().optional(),
+    in: z.array(z.any()).optional(),
+    notIn: z.array(z.any()).optional(),
+    lt: z.any().optional(),
+    lte: z.any().optional(),
+    gt: z.any().optional(),
+    gte: z.any().optional(),
+    contains: z.string().optional(),
+    startsWith: z.string().optional(),
+    endsWith: z.string().optional(),
+    mode: z.enum(["default", "insensitive"]).optional(),
+  })
+  .strict()
+  .refine(hasAtLeastOneRecordField, {
+    message: "where field filters must include at least one known operator",
+  });
 
-const hasAtLeastOneRecordField = (value: Record<string, unknown>) =>
-  Object.keys(value).length > 0;
+function hasAtLeastOneRecordField(value: Record<string, unknown>) {
+  return Object.keys(value).length > 0;
+}
 
 const QueryWhereSchema = z.lazy(() => {
   const logicalClause = z.union([
@@ -330,7 +336,10 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
             : {}),
         })
         .partial()
-        .strict(),
+        .strict()
+        .refine(hasAtLeastOneRecordField, {
+          message: "where field filters must include at least one known operator",
+        }),
     );
 
     return zod

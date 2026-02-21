@@ -312,6 +312,26 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty or unknown where field operators', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: {},
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          name: { regex: 'arch' } as any,
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
