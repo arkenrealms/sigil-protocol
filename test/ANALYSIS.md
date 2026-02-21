@@ -24,3 +24,5 @@
 - Adds regression coverage that top-level query envelopes are strict: unknown/typo keys now fail in both `getQueryInput` and exported `Query` parsing instead of being silently stripped.
 - Adds regression coverage that rejects empty `in`/`notIn` arrays in `where` filters so no-op membership predicates fail before resolver/database execution.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.
+- Added regression coverage that top-level `Query` rejects empty/unknown object payloads inside field `not` filters, because this path previously accepted malformed nested filter objects without operator validation.
+

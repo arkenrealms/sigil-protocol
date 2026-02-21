@@ -74,6 +74,28 @@ describe('getQueryInput', () => {
     expect((parsed?.where?.name?.not as any)?.contains).toBe('mage');
   });
 
+  it('rejects empty or invalid object payloads in top-level Query not filters', () => {
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: {},
+          },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: { regex: 'mage' },
+          },
+        },
+      } as any),
+    ).toThrow();
+  });
+
   it('accepts Prisma-compatible string filter mode values', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({
