@@ -29,3 +29,5 @@
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
 - Hardened exported `Query` logical clause compatibility: `AND`/`OR`/`NOT` now accept either a single nested where object or an array, matching `createPrismaWhereSchema` and Prisma-style payloads.
+- Added recursive validation for object-shaped `not` filters in top-level `Query` operators so `{ not: {} }` and unknown-object payloads fail at schema parse time instead of slipping through as ambiguous/no-op filters.
+

@@ -81,7 +81,23 @@ export type Entity = zod.infer<typeof Entity>;
 const QueryFilterOperators = z
   .object({
     equals: z.any().optional(),
-    not: z.any().optional(),
+    not: z
+      .unknown()
+      .superRefine((value, ctx) => {
+        if (!isPlainObject(value)) {
+          return;
+        }
+
+        const nestedParse = QueryFilterOperators.safeParse(value);
+        if (!nestedParse.success) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message:
+              "where field filters with object `not` values must contain valid operators",
+          });
+        }
+      })
+      .optional(),
     in: z.array(z.any()).nonempty().optional(),
     notIn: z.array(z.any()).nonempty().optional(),
     lt: z.any().optional(),
@@ -100,6 +116,15 @@ const QueryFilterOperators = z
 
 function hasAtLeastOneRecordField(value: Record<string, unknown>) {
   return Object.keys(value).length > 0;
+}
+
+function isPlainObject(value: unknown) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 const QueryWhereSchema = z.lazy(() => {
@@ -284,15 +309,6 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
   depth: number = 3,
 ): zod.ZodTypeAny => {
   const fields = modelSchema.shape;
-
-  const isPlainObject = (value: unknown) => {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-      return false;
-    }
-
-    const prototype = Object.getPrototypeOf(value);
-    return prototype === Object.prototype || prototype === null;
-  };
 
   /**
    * For each field, accept either:
