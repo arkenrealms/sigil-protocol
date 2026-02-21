@@ -378,6 +378,26 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects where field operator objects with only undefined values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { equals: undefined },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { in: undefined },
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects empty in/notIn arrays in where filters', () => {
     const schema = getQueryInput(model);
 

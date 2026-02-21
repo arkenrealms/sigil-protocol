@@ -16,6 +16,7 @@ Shared schema helpers for Sigil protocol routers.
 - `where` membership operators (`in` / `notIn`) now require non-empty arrays so ambiguous no-op filters fail during schema parsing.
 - `where` objects are strict at every level (`Query` + `getQueryInput` recursive schema), so unknown field keys are rejected instead of stripped.
 - Top-level `Query.where` field filters accept scalar shorthand values (for example `{ where: { name: 'archer' } }`) and normalize them into `{ equals: ... }`, matching `getQueryInput` shorthand behavior.
+- Operator objects in `where` filters must include at least one defined value; envelopes like `{ equals: undefined }` are rejected as no-op filters.
 - Exported `Query` now mirrors that behavior: logical operators accept either a single where object or a non-empty array.
 - Field-level `not` filters accept both scalar shorthand values and nested operator objects (Prisma-compatible), e.g. `{ name: { not: { contains: 'foo' } } }`.
 - Scalar shorthand now correctly preserves non-plain object values (for example `Date`) by mapping them to `{ equals: value }` instead of treating them like operator envelopes.

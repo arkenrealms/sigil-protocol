@@ -121,10 +121,18 @@ const QueryFilterOperators = z
   .strict()
   .refine(hasAtLeastOneRecordField, {
     message: "where field filters must include at least one known operator",
+  })
+  .refine(hasAtLeastOneDefinedRecordValue, {
+    message:
+      "where field filters must include at least one defined operator value",
   });
 
 function hasAtLeastOneRecordField(value: Record<string, unknown>) {
   return Object.keys(value).length > 0;
+}
+
+function hasAtLeastOneDefinedRecordValue(value: Record<string, unknown>) {
+  return Object.values(value).some((entry) => entry !== undefined);
 }
 
 function isPlainObject(value: unknown) {
@@ -405,6 +413,10 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         .strict()
         .refine(hasAtLeastOneRecordField, {
           message: "where field filters must include at least one known operator",
+        })
+        .refine(hasAtLeastOneDefinedRecordValue, {
+          message:
+            "where field filters must include at least one defined operator value",
         }),
     );
 

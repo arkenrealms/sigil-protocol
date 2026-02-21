@@ -29,4 +29,5 @@
 - Added regression coverage that top-level `Query` rejects empty/unknown object payloads inside field `not` filters, because this path previously accepted malformed nested filter objects without operator validation.
 - Added regression coverage that top-level `Query` rejects array-shaped field `not` payloads, preventing ambiguous filters that should use `in`/`notIn` semantics.
 - Added regression coverage that top-level `Query` accepts shorthand scalar `where` filters and normalizes them to `{ equals: ... }`, keeping shared query entrypoints behaviorally consistent.
+- Added regression coverage that `where` field-operator objects with only undefined values (e.g. `{ equals: undefined }`) are rejected to prevent no-op filters from passing parse-time validation.
 

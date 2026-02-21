@@ -34,4 +34,5 @@
 - Added recursive validation for object-shaped `not` filters in top-level `Query` operators so `{ not: {} }` and unknown-object payloads fail at schema parse time instead of slipping through as ambiguous/no-op filters.
 - Hardened top-level `Query` field filters so array-shaped `not` payloads are rejected with a clear parse-time error, preventing ambiguous Prisma-invalid envelopes from bypassing operator validation.
 - Aligned top-level `Query.where` behavior with `getQueryInput` shorthand semantics by normalizing scalar field filters (for example `{ where: { name: 'archer' } }`) into `{ equals: ... }`, reducing avoidable parse failures between shared query entrypoints.
+- Hardened field-operator envelope validation to require at least one defined operator value, so no-op payloads like `{ equals: undefined }` are rejected during schema parsing instead of silently passing.
 
