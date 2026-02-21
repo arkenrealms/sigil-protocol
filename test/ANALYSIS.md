@@ -11,6 +11,16 @@
 - Adds regression coverage for optional string fields to ensure wrapped string schemas (`z.string().optional()`) still accept string operators.
 - Validates Date shorthand filters are preserved as `{ equals: Date }` instead of being dropped when non-plain object values are provided.
 - Validates `orderBy` parsing supports Prisma-style array envelopes, normalizes uppercase/whitespace-padded directions, rejects unsupported direction values, rejects empty sort objects, and rejects empty sort arrays.
+- Adds regression coverage that rejects blank/whitespace `orderBy` field keys so invalid sort envelopes fail before resolver/database execution.
 - Adds direct `Query` coverage so logical operators (`AND`/`OR`/`NOT`) accept both single-object and array envelopes.
 - Adds no-op guard coverage to reject empty logical arrays (`AND`/`OR`), preventing ambiguous Prisma filter payloads.
+- Adds regression coverage for empty `where` envelopes so `{}` fails schema parsing instead of propagating as a silent no-op filter.
+- Adds regression coverage that rejects empty field-level operator objects and unknown operator keys in top-level `Query.where` filters, preventing stripped no-op filters from passing parse-time validation.
+- Adds regression coverage for unknown top-level `where` field keys (including mixed valid+invalid keys), ensuring schema parsing now fails instead of silently stripping typo-shaped filters.
+- Adds regression coverage for blank/padded-key `include`/`select` envelopes so malformed projection maps fail in schema parsing instead of leaking into resolver/database query construction.
+- Adds regression coverage for empty `include`/`select` envelopes so no-op projection objects are rejected at parse time instead of silently propagating.
+- Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.
+- Adds cursor-envelope regression coverage so empty cursor objects and blank/padded/reserved cursor keys fail during schema parsing, while valid non-empty cursor objects continue to parse cleanly.
+- Adds regression coverage that top-level query envelopes are strict: unknown/typo keys now fail in both `getQueryInput` and exported `Query` parsing instead of being silently stripped.
+- Adds regression coverage that rejects empty `in`/`notIn` arrays in `where` filters so no-op membership predicates fail before resolver/database execution.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.

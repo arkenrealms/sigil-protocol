@@ -78,20 +78,29 @@ export const Entity = z
 
 export type Entity = zod.infer<typeof Entity>;
 
-const QueryFilterOperators = z.object({
-  equals: z.any().optional(),
-  not: z.any().optional(),
-  in: z.array(z.any()).optional(),
-  notIn: z.array(z.any()).optional(),
-  lt: z.any().optional(),
-  lte: z.any().optional(),
-  gt: z.any().optional(),
-  gte: z.any().optional(),
-  contains: z.string().optional(),
-  startsWith: z.string().optional(),
-  endsWith: z.string().optional(),
-  mode: z.enum(["default", "insensitive"]).optional(),
-});
+const QueryFilterOperators = z
+  .object({
+    equals: z.any().optional(),
+    not: z.any().optional(),
+    in: z.array(z.any()).nonempty().optional(),
+    notIn: z.array(z.any()).nonempty().optional(),
+    lt: z.any().optional(),
+    lte: z.any().optional(),
+    gt: z.any().optional(),
+    gte: z.any().optional(),
+    contains: z.string().optional(),
+    startsWith: z.string().optional(),
+    endsWith: z.string().optional(),
+    mode: z.enum(["default", "insensitive"]).optional(),
+  })
+  .strict()
+  .refine(hasAtLeastOneRecordField, {
+    message: "where field filters must include at least one known operator",
+  });
+
+function hasAtLeastOneRecordField(value: Record<string, unknown>) {
+  return Object.keys(value).length > 0;
+}
 
 const QueryWhereSchema = z.lazy(() => {
   const logicalClause = z.union([
@@ -99,16 +108,21 @@ const QueryWhereSchema = z.lazy(() => {
     z.array(QueryWhereSchema).nonempty(),
   ]);
 
-  return z.object({
-    AND: logicalClause.optional(),
-    OR: logicalClause.optional(),
-    NOT: logicalClause.optional(),
-    id: QueryFilterOperators.optional(),
-    key: QueryFilterOperators.optional(),
-    name: QueryFilterOperators.optional(),
-    email: QueryFilterOperators.optional(),
-    status: QueryFilterOperators.optional(),
-  });
+  return z
+    .object({
+      AND: logicalClause.optional(),
+      OR: logicalClause.optional(),
+      NOT: logicalClause.optional(),
+      id: QueryFilterOperators.optional(),
+      key: QueryFilterOperators.optional(),
+      name: QueryFilterOperators.optional(),
+      email: QueryFilterOperators.optional(),
+      status: QueryFilterOperators.optional(),
+    })
+    .strict()
+    .refine(hasAtLeastOneRecordField, {
+      message: "where entries must include at least one filter clause",
+    });
 });
 
 const normalizeOrderDirection = (value: unknown) => {
@@ -119,23 +133,69 @@ const normalizeOrderDirection = (value: unknown) => {
   return value.trim().toLowerCase();
 };
 
+const isSafeRecordFieldKey = (field: unknown) => {
+  if (typeof field !== "string") {
+    return false;
+  }
+
+  const normalizedField = field.trim();
+  if (normalizedField.length === 0) {
+    return false;
+  }
+
+  // Reject whitespace-padded keys so parsed envelopes keep canonical field names.
+  if (normalizedField !== field) {
+    return false;
+  }
+
+  const lowered = normalizedField.toLowerCase();
+  return (
+    lowered !== "__proto__" &&
+    lowered !== "prototype" &&
+    lowered !== "constructor"
+  );
+};
+
 const QueryOrderBySchema = z
   .record(z.preprocess(normalizeOrderDirection, z.enum(["asc", "desc"])))
-  .refine((value) => Object.keys(value).length > 0, {
+  .refine(hasAtLeastOneRecordField, {
     message: "orderBy entries must include at least one sortable field",
+  })
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "orderBy field names must be non-empty safe strings",
   });
 
-export const Query = z.object({
-  skip: z.number().int().min(0).default(0).optional(),
-  take: z.number().int().min(0).default(10).optional(),
-  cursor: z.record(z.any()).optional(),
-  where: QueryWhereSchema.optional(),
-  orderBy: z
-    .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
-    .optional(),
-  include: z.record(z.boolean()).optional(),
-  select: z.record(z.boolean()).optional(),
-});
+const QueryBooleanFieldRecordSchema = z
+  .record(z.boolean())
+  .refine(hasAtLeastOneRecordField, {
+    message: "include/select entries must include at least one field",
+  })
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "include/select field names must be non-empty safe strings",
+  });
+
+const QueryCursorSchema = z
+  .record(z.any())
+  .refine(hasAtLeastOneRecordField, {
+    message: "cursor entries must include at least one field",
+  })
+  .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
+    message: "cursor field names must be non-empty safe strings",
+  });
+
+export const Query = z
+  .object({
+    skip: z.number().int().min(0).default(0).optional(),
+    take: z.number().int().min(0).default(10).optional(),
+    cursor: QueryCursorSchema.optional(),
+    where: QueryWhereSchema.optional(),
+    orderBy: z
+      .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
+      .optional(),
+    include: QueryBooleanFieldRecordSchema.optional(),
+    select: QueryBooleanFieldRecordSchema.optional(),
+  })
+  .strict();
 
 // // Operators for filtering in a Prisma-like way
 // type PrismaFilterOperators<T extends ZodTypeAny> = zod.ZodObject<
@@ -222,7 +282,7 @@ export const Query = z.object({
 export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
   modelSchema: zod.ZodObject<T>,
   depth: number = 3,
-): zod.ZodObject<any> => {
+): zod.ZodTypeAny => {
   const fields = modelSchema.shape;
 
   const isPlainObject = (value: unknown) => {
@@ -263,8 +323,8 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         .object({
           equals: normalizedValue.optional(),
           not: zod.union([normalizedValue, opsSchema]).optional(),
-          in: zod.array(normalizedValue).optional(),
-          notIn: zod.array(normalizedValue).optional(),
+          in: zod.array(normalizedValue).nonempty().optional(),
+          notIn: zod.array(normalizedValue).nonempty().optional(),
           lt: normalizedValue.optional(),
           lte: normalizedValue.optional(),
           gt: normalizedValue.optional(),
@@ -279,7 +339,10 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
             : {}),
         })
         .partial()
-        .strict(),
+        .strict()
+        .refine(hasAtLeastOneRecordField, {
+          message: "where field filters must include at least one known operator",
+        }),
     );
 
     return zod
@@ -304,9 +367,14 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
 
   if (depth <= 0) {
     // Base case: no AND/OR/NOT
-    return zod.object({
-      ...fieldFilters,
-    });
+    return zod
+      .object({
+        ...fieldFilters,
+      })
+      .strict()
+      .refine(hasAtLeastOneRecordField, {
+        message: "where entries must include at least one filter clause",
+      });
   }
 
   const nestedWhereSchema = zod.lazy(() =>
@@ -317,12 +385,17 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     zod.array(nestedWhereSchema).nonempty(),
   ]);
 
-  return zod.object({
-    AND: logicalSchema.optional(),
-    OR: logicalSchema.optional(),
-    NOT: logicalSchema.optional(),
-    ...fieldFilters,
-  });
+  return zod
+    .object({
+      AND: logicalSchema.optional(),
+      OR: logicalSchema.optional(),
+      NOT: logicalSchema.optional(),
+      ...fieldFilters,
+    })
+    .strict()
+    .refine(hasAtLeastOneRecordField, {
+      message: "where entries must include at least one filter clause",
+    });
 };
 
 export const getQueryOutput = <T extends zod.ZodTypeAny>(data: T) => {
@@ -361,7 +434,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       // Accept both `take` (Prisma-style) and legacy `limit`.
       take: zod.number().int().min(0).default(10).optional(),
       limit: zod.number().int().min(0).default(10).optional(),
-      cursor: zod.record(zod.any()).optional(),
+      cursor: QueryCursorSchema.optional(),
 
       // only valid for object schemas
       where: isObjectSchema
@@ -371,9 +444,10 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       orderBy: zod
         .union([QueryOrderBySchema, zod.array(QueryOrderBySchema).nonempty()])
         .optional(),
-      include: zod.record(zod.boolean()).optional(),
-      select: zod.record(zod.boolean()).optional(),
+      include: QueryBooleanFieldRecordSchema.optional(),
+      select: QueryBooleanFieldRecordSchema.optional(),
     })
+    .strict()
     .partial()
     .transform((query) => {
       if (query.take === undefined && query.limit !== undefined) {

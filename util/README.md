@@ -10,6 +10,10 @@ Shared schema helpers for Sigil protocol routers.
 - If both `take` and `limit` are provided but differ, `take` is treated as canonical and `limit` is normalized to match.
 - Pagination fields (`skip`/`take`/`limit`) are validated as non-negative integers to prevent invalid downstream query envelopes.
 - `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or a non-empty array.
+- `where` envelopes now reject empty objects (`{}`) in both `Query` and `getQueryInput` paths so no-op filters fail fast at schema parse time.
+- Top-level `Query` field filters now reject empty operator objects and unknown operator keys, so `where` clauses cannot silently degrade into stripped no-op payloads.
+- `where` membership operators (`in` / `notIn`) now require non-empty arrays so ambiguous no-op filters fail during schema parsing.
+- `where` objects are strict at every level (`Query` + `getQueryInput` recursive schema), so unknown field keys are rejected instead of stripped.
 - Exported `Query` now mirrors that behavior: logical operators accept either a single where object or a non-empty array.
 - Field-level `not` filters accept both scalar shorthand values and nested operator objects (Prisma-compatible), e.g. `{ name: { not: { contains: 'foo' } } }`.
 - Scalar shorthand now correctly preserves non-plain object values (for example `Date`) by mapping them to `{ equals: value }` instead of treating them like operator envelopes.
@@ -20,3 +24,10 @@ Shared schema helpers for Sigil protocol routers.
 - `orderBy` directions are normalized with trim + lowercase in both `Query` and `getQueryInput`, so `ASC`/`DESC` and padded variants are accepted.
 - `orderBy` now rejects empty objects (`{}`) to prevent no-op/ambiguous sort envelopes.
 - `orderBy` now also rejects empty arrays (`[]`) so callers must provide at least one concrete sort clause when using array form.
+- `orderBy` now rejects blank/whitespace field keys (for example `{ "": "asc" }`) to prevent invalid sort envelopes from reaching Prisma.
+- `include`/`select` now reject blank/whitespace field keys (for example `{ " ": true }`) so invalid projection envelopes fail fast during schema parsing.
+- `include`/`select` now reject empty objects (`{}`) so projection envelopes always include at least one explicit field.
+- `orderBy`/`include`/`select` now also reject reserved prototype keys (`__proto__`, `prototype`, `constructor`) to avoid passing prototype-pollution-shaped payloads into downstream query processing.
+- `orderBy`/`include`/`select` and `cursor` reject whitespace-padded field keys (for example `" name "`) so envelopes stay canonical and do not silently carry malformed field names.
+- `cursor` now uses the same non-empty + safe-key guards as `orderBy`/`include`/`select`, rejecting blank/reserved keys and empty envelopes before resolver/database pagination handling.
+- `Query`/`getQueryInput` envelopes are strict now, so unknown top-level keys are rejected at parse time instead of being silently stripped.

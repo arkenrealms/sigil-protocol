@@ -221,6 +221,29 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects blank or padded orderBy field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ '': 'asc' }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ ' name ': 'asc' }],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { name: { equals: 'archer' } },
+        orderBy: { ' ': 'desc' },
+      }),
+    ).toThrow();
+  });
+
   it('Query accepts single-object logical clauses for Prisma compatibility', () => {
     const parsed = Query.parse({
       where: {
@@ -273,6 +296,100 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects empty where envelopes to avoid no-op filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {},
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty or unknown where field operators', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: {},
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          name: { regex: 'arch' } as any,
+        },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty in/notIn arrays in where filters', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { in: [] },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          level: { notIn: [] },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { in: [] },
+        },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects unknown where field keys instead of silently stripping them', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          unknownField: { equals: 'arch' },
+        } as any,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { equals: 'arch' },
+          typoField: { equals: 'ranger' },
+        } as any,
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { equals: 'Active' },
+          extraneous: { equals: 'nope' },
+        } as any,
+      }),
+    ).toThrow();
+  });
+
   it('rejects negative pagination values', () => {
     const schema = getQueryInput(model);
 
@@ -287,5 +404,159 @@ describe('getQueryInput', () => {
     expect(() => schema.parse({ skip: 1.2 })).toThrow();
     expect(() => schema.parse({ take: 2.5 })).toThrow();
     expect(() => schema.parse({ limit: 3.8 })).toThrow();
+  });
+
+  it('rejects blank or padded include/select field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: { ' ': true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        include: { ' owner ': true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: { '': false },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: { ' name ': true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        include: { '\t': true },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty include/select envelopes', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        select: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        include: {},
+      }),
+    ).toThrow();
+  });
+
+  it('accepts include/select with non-empty field keys', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      include: { owner: true },
+      select: { name: true },
+    });
+
+    expect(parsed?.include).toEqual({ owner: true });
+    expect(parsed?.select).toEqual({ name: true });
+  });
+
+  it('rejects reserved prototype-pollution field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        orderBy: [{ __proto__: 'asc' } as any],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        include: { constructor: true },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        select: { prototype: true },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects empty cursor envelopes', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: {},
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        cursor: {},
+      }),
+    ).toThrow();
+  });
+
+  it('rejects blank, padded, or reserved cursor field keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: { ' ': 'abc' },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { ' id ': 'abc' },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { __proto__: 'abc' } as any,
+      }),
+    ).toThrow();
+  });
+
+  it('accepts cursor with non-empty safe field keys', () => {
+    const schema = getQueryInput(model);
+    const parsed = schema.parse({
+      cursor: { id: '507f1f77bcf86cd799439011' },
+    });
+
+    expect(parsed?.cursor).toEqual({ id: '507f1f77bcf86cd799439011' });
+  });
+
+  it('rejects unknown top-level query envelope keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: { name: 'archer' },
+        typoEnvelopeKey: true,
+      } as any),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { name: { equals: 'archer' } },
+        anotherUnknownKey: 123,
+      } as any),
+    ).toThrow();
   });
 });
