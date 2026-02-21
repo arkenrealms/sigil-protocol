@@ -513,4 +513,22 @@ describe('getQueryInput', () => {
 
     expect(parsed?.cursor).toEqual({ id: '507f1f77bcf86cd799439011' });
   });
+
+  it('rejects unknown top-level query envelope keys', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: { name: 'archer' },
+        typoEnvelopeKey: true,
+      } as any),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { name: { equals: 'archer' } },
+        anotherUnknownKey: 123,
+      } as any),
+    ).toThrow();
+  });
 });

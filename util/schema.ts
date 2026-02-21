@@ -183,17 +183,19 @@ const QueryCursorSchema = z
     message: "cursor field names must be non-empty safe strings",
   });
 
-export const Query = z.object({
-  skip: z.number().int().min(0).default(0).optional(),
-  take: z.number().int().min(0).default(10).optional(),
-  cursor: QueryCursorSchema.optional(),
-  where: QueryWhereSchema.optional(),
-  orderBy: z
-    .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
-    .optional(),
-  include: QueryBooleanFieldRecordSchema.optional(),
-  select: QueryBooleanFieldRecordSchema.optional(),
-});
+export const Query = z
+  .object({
+    skip: z.number().int().min(0).default(0).optional(),
+    take: z.number().int().min(0).default(10).optional(),
+    cursor: QueryCursorSchema.optional(),
+    where: QueryWhereSchema.optional(),
+    orderBy: z
+      .union([QueryOrderBySchema, z.array(QueryOrderBySchema).nonempty()])
+      .optional(),
+    include: QueryBooleanFieldRecordSchema.optional(),
+    select: QueryBooleanFieldRecordSchema.optional(),
+  })
+  .strict();
 
 // // Operators for filtering in a Prisma-like way
 // type PrismaFilterOperators<T extends ZodTypeAny> = zod.ZodObject<
@@ -445,6 +447,7 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       include: QueryBooleanFieldRecordSchema.optional(),
       select: QueryBooleanFieldRecordSchema.optional(),
     })
+    .strict()
     .partial()
     .transform((query) => {
       if (query.take === undefined && query.limit !== undefined) {

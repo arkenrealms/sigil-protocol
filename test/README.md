@@ -26,3 +26,4 @@ Jest tests for protocol schema helpers.
 - Projection no-op guard (`include`/`select` reject empty objects)
 - Reserved-key validation (`orderBy`/`include`/`select` reject `__proto__`/`prototype`/`constructor`)
 - Cursor envelope validation (reject empty/blank/whitespace-padded/reserved-key cursors; accept safe non-empty cursor fields)
+- Top-level query envelope strictness (reject unknown/typo envelope keys in both `getQueryInput` and exported `Query`)
