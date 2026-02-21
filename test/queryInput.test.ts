@@ -500,6 +500,21 @@ describe('getQueryInput', () => {
     expect(() => schema.parse({ limit: 3.8 })).toThrow();
   });
 
+  it('rejects non-finite pagination values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() => schema.parse({ skip: Number.POSITIVE_INFINITY })).toThrow();
+    expect(() => schema.parse({ take: Number.NEGATIVE_INFINITY })).toThrow();
+    expect(() => schema.parse({ limit: Number.NaN })).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { status: { equals: 'Active' } },
+        take: Number.POSITIVE_INFINITY,
+      }),
+    ).toThrow();
+  });
+
   it('rejects blank or padded include/select field keys', () => {
     const schema = getQueryInput(model);
 

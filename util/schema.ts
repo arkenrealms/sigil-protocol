@@ -255,9 +255,9 @@ const QueryCursorSchema = z
 
 export const Query = z
   .object({
-    skip: z.number().int().min(0).default(0).optional(),
-    take: z.number().int().min(0).default(10).optional(),
-    limit: z.number().int().min(0).default(10).optional(),
+    skip: z.number().finite().int().min(0).default(0).optional(),
+    take: z.number().finite().int().min(0).default(10).optional(),
+    limit: z.number().finite().int().min(0).default(10).optional(),
     cursor: QueryCursorSchema.optional(),
     where: QueryWhereSchema.optional(),
     orderBy: z
@@ -521,10 +521,10 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       data: dataSchema,
 
       // keep your query envelope fields
-      skip: zod.number().int().min(0).default(0).optional(),
+      skip: zod.number().finite().int().min(0).default(0).optional(),
       // Accept both `take` (Prisma-style) and legacy `limit`.
-      take: zod.number().int().min(0).default(10).optional(),
-      limit: zod.number().int().min(0).default(10).optional(),
+      take: zod.number().finite().int().min(0).default(10).optional(),
+      limit: zod.number().finite().int().min(0).default(10).optional(),
       cursor: QueryCursorSchema.optional(),
 
       // only valid for object schemas

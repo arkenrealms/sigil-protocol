@@ -9,7 +9,7 @@ Shared schema helpers for Sigil protocol routers.
 - When only `limit` is provided, parsing now mirrors it into `take` for downstream Prisma-style consumers.
 - When only `take` is provided, parsing mirrors it into `limit` to preserve legacy callers that still read `limit`.
 - If both `take` and `limit` are provided but differ, `take` is treated as canonical and `limit` is normalized to match.
-- Pagination fields (`skip`/`take`/`limit`) are validated as non-negative integers to prevent invalid downstream query envelopes.
+- Pagination fields (`skip`/`take`/`limit`) are validated as finite non-negative integers to prevent invalid downstream query envelopes (for example `Infinity` / `-Infinity` / `NaN`).
 - `createPrismaWhereSchema` logical operators (`AND`/`OR`/`NOT`) accept either a single where object or a non-empty array.
 - `where` envelopes now reject empty objects (`{}`) in both `Query` and `getQueryInput` paths so no-op filters fail fast at schema parse time.
 - Top-level `Query` field filters now reject empty operator objects and unknown operator keys, so `where` clauses cannot silently degrade into stripped no-op payloads.
