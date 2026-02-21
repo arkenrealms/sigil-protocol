@@ -567,6 +567,28 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects cursor envelopes that only contain nullish values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: { id: undefined },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { id: null },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        cursor: { id: undefined },
+      }),
+    ).toThrow();
+  });
+
   it('accepts cursor with non-empty safe field keys', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({

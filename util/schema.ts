@@ -208,6 +208,9 @@ const QueryBooleanFieldRecordSchema = z
     message: "include/select field names must be non-empty safe strings",
   });
 
+const hasAtLeastOneNonNullishRecordValue = (value: Record<string, unknown>) =>
+  Object.values(value).some((entry) => entry !== null && entry !== undefined);
+
 const QueryCursorSchema = z
   .record(z.any())
   .refine(hasAtLeastOneRecordField, {
@@ -215,6 +218,9 @@ const QueryCursorSchema = z
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
     message: "cursor field names must be non-empty safe strings",
+  })
+  .refine(hasAtLeastOneNonNullishRecordValue, {
+    message: "cursor entries must include at least one non-nullish value",
   });
 
 export const Query = z

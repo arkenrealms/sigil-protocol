@@ -31,4 +31,5 @@ Shared schema helpers for Sigil protocol routers.
 - `orderBy`/`include`/`select` now also reject reserved prototype keys (`__proto__`, `prototype`, `constructor`) to avoid passing prototype-pollution-shaped payloads into downstream query processing.
 - `orderBy`/`include`/`select` and `cursor` reject whitespace-padded field keys (for example `" name "`) so envelopes stay canonical and do not silently carry malformed field names.
 - `cursor` now uses the same non-empty + safe-key guards as `orderBy`/`include`/`select`, rejecting blank/reserved keys and empty envelopes before resolver/database pagination handling.
+- `cursor` now also requires at least one non-nullish field value, so payloads like `{ cursor: { id: undefined } }` or `{ cursor: { id: null } }` fail fast instead of drifting into pagination lookups.
 - `Query`/`getQueryInput` envelopes are strict now, so unknown top-level keys are rejected at parse time instead of being silently stripped.
