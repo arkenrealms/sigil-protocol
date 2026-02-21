@@ -136,6 +136,18 @@ function isPlainObject(value: unknown) {
   return prototype === Object.prototype || prototype === null;
 }
 
+const QueryTopLevelFieldFilter = z.preprocess((input) => {
+  if (input === undefined) {
+    return input;
+  }
+
+  if (isPlainObject(input) || Array.isArray(input)) {
+    return input;
+  }
+
+  return { equals: input };
+}, QueryFilterOperators).optional();
+
 const QueryWhereSchema = z.lazy(() => {
   const logicalClause = z.union([
     QueryWhereSchema,
@@ -147,11 +159,11 @@ const QueryWhereSchema = z.lazy(() => {
       AND: logicalClause.optional(),
       OR: logicalClause.optional(),
       NOT: logicalClause.optional(),
-      id: QueryFilterOperators.optional(),
-      key: QueryFilterOperators.optional(),
-      name: QueryFilterOperators.optional(),
-      email: QueryFilterOperators.optional(),
-      status: QueryFilterOperators.optional(),
+      id: QueryTopLevelFieldFilter,
+      key: QueryTopLevelFieldFilter,
+      name: QueryTopLevelFieldFilter,
+      email: QueryTopLevelFieldFilter,
+      status: QueryTopLevelFieldFilter,
     })
     .strict()
     .refine(hasAtLeastOneRecordField, {

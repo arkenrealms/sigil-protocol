@@ -278,6 +278,18 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('Query accepts top-level shorthand scalar filters and normalizes to equals', () => {
+    const parsed = Query.parse({
+      where: {
+        name: 'archer',
+        status: 'Active',
+      },
+    });
+
+    expect(parsed.where?.name?.equals).toBe('archer');
+    expect(parsed.where?.status?.equals).toBe('Active');
+  });
+
   it('Query accepts single-object logical clauses for Prisma compatibility', () => {
     const parsed = Query.parse({
       where: {
