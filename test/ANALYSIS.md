@@ -19,6 +19,7 @@
 - Adds regression coverage for unknown top-level `where` field keys (including mixed valid+invalid keys), ensuring schema parsing now fails instead of silently stripping typo-shaped filters.
 - Adds regression coverage for blank/padded-key `include`/`select` envelopes so malformed projection maps fail in schema parsing instead of leaking into resolver/database query construction.
 - Adds regression coverage for empty `include`/`select` envelopes so no-op projection objects are rejected at parse time instead of silently propagating.
+- Adds regression coverage for all-false `include`/`select` payloads, requiring at least one `true` projection field so boolean maps cannot pass as silent no-op envelopes.
 - Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.
 - Adds cursor-envelope regression coverage so empty cursor objects and blank/padded/reserved cursor keys fail during schema parsing, while valid non-empty cursor objects continue to parse cleanly.
 - Extends cursor regression coverage to reject nullish-only cursor values (`null`/`undefined`) so structurally non-empty but semantically unusable pagination cursors fail before resolver/database handling.

@@ -222,6 +222,10 @@ const QueryOrderBySchema = z
     message: "orderBy field names must be non-empty safe strings",
   });
 
+const hasAtLeastOneTruthyBooleanRecordValue = (
+  value: Record<string, boolean>,
+) => Object.values(value).some((entry) => entry === true);
+
 const QueryBooleanFieldRecordSchema = z
   .record(z.boolean())
   .refine(hasAtLeastOneRecordField, {
@@ -229,6 +233,9 @@ const QueryBooleanFieldRecordSchema = z
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
     message: "include/select field names must be non-empty safe strings",
+  })
+  .refine(hasAtLeastOneTruthyBooleanRecordValue, {
+    message: "include/select entries must include at least one true field",
   });
 
 const hasAtLeastOneNonNullishRecordValue = (value: Record<string, unknown>) =>

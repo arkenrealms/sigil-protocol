@@ -556,14 +556,30 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
-  it('accepts include/select with non-empty field keys', () => {
+  it('rejects include/select envelopes when all fields are false', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: { owner: false },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        select: { name: false },
+      }),
+    ).toThrow();
+  });
+
+  it('accepts include/select with at least one true field key', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({
-      include: { owner: true },
+      include: { owner: true, archived: false },
       select: { name: true },
     });
 
-    expect(parsed?.include).toEqual({ owner: true });
+    expect(parsed?.include).toEqual({ owner: true, archived: false });
     expect(parsed?.select).toEqual({ name: true });
   });
 

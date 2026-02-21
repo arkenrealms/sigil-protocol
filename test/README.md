@@ -26,6 +26,7 @@ Jest tests for protocol schema helpers.
 - Top-level `where` field-key validation (reject unknown/typo keys, including mixed valid+invalid filters)
 - Projection-key validation (`include`/`select` reject blank/whitespace-padded field names)
 - Projection no-op guard (`include`/`select` reject empty objects)
+- Projection truthy guard (`include`/`select` reject all-false boolean maps and require at least one `true` field)
 - Reserved-key validation (`orderBy`/`include`/`select` reject `__proto__`/`prototype`/`constructor`)
 - Cursor envelope validation (reject empty/blank/whitespace-padded/reserved-key cursors; reject nullish-only cursor values; accept safe non-empty cursor fields)
 - Top-level query envelope strictness (reject unknown/typo envelope keys in both `getQueryInput` and exported `Query`)
