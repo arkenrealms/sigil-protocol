@@ -21,6 +21,7 @@ Jest tests for protocol schema helpers.
 - Logical no-op protection (reject empty `AND`/`OR` arrays)
 - `where` no-op protection (reject empty `where: {}` envelopes)
 - Field-operator validation in top-level `Query.where` (reject empty operator objects and unknown operator keys)
+- Defined-clause validation in `where` envelopes (reject clauses that are present but only `undefined`, such as `{ name: undefined }` or `{ AND: undefined }`)
 - Membership-operator validation (`in`/`notIn` reject empty arrays to prevent no-op filters)
 - Top-level `where` field-key validation (reject unknown/typo keys, including mixed valid+invalid filters)
 - Projection-key validation (`include`/`select` reject blank/whitespace-padded field names)

@@ -358,6 +358,34 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects where envelopes that only contain undefined clauses', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: undefined,
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          AND: undefined,
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          OR: undefined,
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects empty or unknown where field operators', () => {
     const schema = getQueryInput(model);
 

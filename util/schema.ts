@@ -176,6 +176,9 @@ const QueryWhereSchema = z.lazy(() => {
     .strict()
     .refine(hasAtLeastOneRecordField, {
       message: "where entries must include at least one filter clause",
+    })
+    .refine(hasAtLeastOneDefinedRecordValue, {
+      message: "where entries must include at least one defined filter clause",
     });
 });
 
@@ -449,6 +452,9 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
       .strict()
       .refine(hasAtLeastOneRecordField, {
         message: "where entries must include at least one filter clause",
+      })
+      .refine(hasAtLeastOneDefinedRecordValue, {
+        message: "where entries must include at least one defined filter clause",
       });
   }
 
@@ -470,6 +476,9 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     .strict()
     .refine(hasAtLeastOneRecordField, {
       message: "where entries must include at least one filter clause",
+    })
+    .refine(hasAtLeastOneDefinedRecordValue, {
+      message: "where entries must include at least one defined filter clause",
     });
 };
 
