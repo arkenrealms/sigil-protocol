@@ -25,4 +25,5 @@
 - Adds regression coverage that rejects empty `in`/`notIn` arrays in `where` filters so no-op membership predicates fail before resolver/database execution.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.
 - Added regression coverage that top-level `Query` rejects empty/unknown object payloads inside field `not` filters, because this path previously accepted malformed nested filter objects without operator validation.
+- Added regression coverage that top-level `Query` rejects array-shaped field `not` payloads, preventing ambiguous filters that should use `in`/`notIn` semantics.
 

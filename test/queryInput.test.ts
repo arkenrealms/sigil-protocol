@@ -96,6 +96,18 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects array payloads in top-level Query not filters', () => {
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: ['mage'],
+          },
+        },
+      } as any),
+    ).toThrow();
+  });
+
   it('accepts Prisma-compatible string filter mode values', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({

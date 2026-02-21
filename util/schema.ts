@@ -84,6 +84,15 @@ const QueryFilterOperators = z
     not: z
       .unknown()
       .superRefine((value, ctx) => {
+        if (Array.isArray(value)) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message:
+              "where field filters with `not` arrays are unsupported; use `in`/`notIn` operators",
+          });
+          return;
+        }
+
         if (!isPlainObject(value)) {
           return;
         }

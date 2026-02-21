@@ -28,3 +28,4 @@ Jest tests for protocol schema helpers.
 - Reserved-key validation (`orderBy`/`include`/`select` reject `__proto__`/`prototype`/`constructor`)
 - Cursor envelope validation (reject empty/blank/whitespace-padded/reserved-key cursors; accept safe non-empty cursor fields)
 - Top-level query envelope strictness (reject unknown/typo envelope keys in both `getQueryInput` and exported `Query`)
+- Top-level `Query` `not` operator guards (reject array payloads; use `in`/`notIn` for list semantics)
