@@ -74,6 +74,40 @@ describe('getQueryInput', () => {
     expect((parsed?.where?.name?.not as any)?.contains).toBe('mage');
   });
 
+  it('rejects empty or invalid object payloads in top-level Query not filters', () => {
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: {},
+          },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: { regex: 'mage' },
+          },
+        },
+      } as any),
+    ).toThrow();
+  });
+
+  it('rejects array payloads in top-level Query not filters', () => {
+    expect(() =>
+      Query.parse({
+        where: {
+          name: {
+            not: ['mage'],
+          },
+        },
+      } as any),
+    ).toThrow();
+  });
+
   it('accepts Prisma-compatible string filter mode values', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({
@@ -244,6 +278,18 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('Query accepts top-level shorthand scalar filters and normalizes to equals', () => {
+    const parsed = Query.parse({
+      where: {
+        name: 'archer',
+        status: 'Active',
+      },
+    });
+
+    expect(parsed.where?.name?.equals).toBe('archer');
+    expect(parsed.where?.status?.equals).toBe('Active');
+  });
+
   it('Query accepts single-object logical clauses for Prisma compatibility', () => {
     const parsed = Query.parse({
       where: {
@@ -312,6 +358,34 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects where envelopes that only contain undefined clauses', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: undefined,
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        where: {
+          AND: undefined,
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          OR: undefined,
+        },
+      }),
+    ).toThrow();
+  });
+
   it('rejects empty or unknown where field operators', () => {
     const schema = getQueryInput(model);
 
@@ -327,6 +401,26 @@ describe('getQueryInput', () => {
       Query.parse({
         where: {
           name: { regex: 'arch' } as any,
+        },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects where field operator objects with only undefined values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        where: {
+          name: { equals: undefined },
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: {
+          status: { in: undefined },
         },
       }),
     ).toThrow();
@@ -406,6 +500,21 @@ describe('getQueryInput', () => {
     expect(() => schema.parse({ limit: 3.8 })).toThrow();
   });
 
+  it('rejects non-finite pagination values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() => schema.parse({ skip: Number.POSITIVE_INFINITY })).toThrow();
+    expect(() => schema.parse({ take: Number.NEGATIVE_INFINITY })).toThrow();
+    expect(() => schema.parse({ limit: Number.NaN })).toThrow();
+
+    expect(() =>
+      Query.parse({
+        where: { status: { equals: 'Active' } },
+        take: Number.POSITIVE_INFINITY,
+      }),
+    ).toThrow();
+  });
+
   it('rejects blank or padded include/select field keys', () => {
     const schema = getQueryInput(model);
 
@@ -462,14 +571,30 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
-  it('accepts include/select with non-empty field keys', () => {
+  it('rejects include/select envelopes when all fields are false', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        include: { owner: false },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        select: { name: false },
+      }),
+    ).toThrow();
+  });
+
+  it('accepts include/select with at least one true field key', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({
-      include: { owner: true },
+      include: { owner: true, archived: false },
       select: { name: true },
     });
 
-    expect(parsed?.include).toEqual({ owner: true });
+    expect(parsed?.include).toEqual({ owner: true, archived: false });
     expect(parsed?.select).toEqual({ name: true });
   });
 
@@ -533,6 +658,28 @@ describe('getQueryInput', () => {
     ).toThrow();
   });
 
+  it('rejects cursor envelopes that only contain nullish values', () => {
+    const schema = getQueryInput(model);
+
+    expect(() =>
+      schema.parse({
+        cursor: { id: undefined },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      schema.parse({
+        cursor: { id: null },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      Query.parse({
+        cursor: { id: undefined },
+      }),
+    ).toThrow();
+  });
+
   it('accepts cursor with non-empty safe field keys', () => {
     const schema = getQueryInput(model);
     const parsed = schema.parse({
@@ -540,6 +687,27 @@ describe('getQueryInput', () => {
     });
 
     expect(parsed?.cursor).toEqual({ id: '507f1f77bcf86cd799439011' });
+  });
+
+  it('supports Query limit alias and normalizes it into take', () => {
+    const parsed = Query.parse({
+      where: { status: { equals: 'Active' } },
+      limit: 15,
+    });
+
+    expect(parsed.limit).toBe(15);
+    expect(parsed.take).toBe(15);
+  });
+
+  it('normalizes conflicting Query take/limit values to take as canonical', () => {
+    const parsed = Query.parse({
+      where: { status: { equals: 'Active' } },
+      take: 9,
+      limit: 3,
+    });
+
+    expect(parsed.take).toBe(9);
+    expect(parsed.limit).toBe(9);
   });
 
   it('rejects unknown top-level query envelope keys', () => {
