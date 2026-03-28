@@ -81,7 +81,32 @@ export type Entity = zod.infer<typeof Entity>;
 const QueryFilterOperators = z
   .object({
     equals: z.any().optional(),
-    not: z.any().optional(),
+    not: z
+      .unknown()
+      .superRefine((value, ctx) => {
+        if (Array.isArray(value)) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message:
+              "where field filters with `not` arrays are unsupported; use `in`/`notIn` operators",
+          });
+          return;
+        }
+
+        if (!isPlainObject(value)) {
+          return;
+        }
+
+        const nestedParse = QueryFilterOperators.safeParse(value);
+        if (!nestedParse.success) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message:
+              "where field filters with object `not` values must contain valid operators",
+          });
+        }
+      })
+      .optional(),
     in: z.array(z.any()).nonempty().optional(),
     notIn: z.array(z.any()).nonempty().optional(),
     lt: z.any().optional(),
@@ -96,11 +121,40 @@ const QueryFilterOperators = z
   .strict()
   .refine(hasAtLeastOneRecordField, {
     message: "where field filters must include at least one known operator",
+  })
+  .refine(hasAtLeastOneDefinedRecordValue, {
+    message:
+      "where field filters must include at least one defined operator value",
   });
 
 function hasAtLeastOneRecordField(value: Record<string, unknown>) {
   return Object.keys(value).length > 0;
 }
+
+function hasAtLeastOneDefinedRecordValue(value: Record<string, unknown>) {
+  return Object.values(value).some((entry) => entry !== undefined);
+}
+
+function isPlainObject(value: unknown) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+const QueryTopLevelFieldFilter = z.preprocess((input) => {
+  if (input === undefined) {
+    return input;
+  }
+
+  if (isPlainObject(input) || Array.isArray(input)) {
+    return input;
+  }
+
+  return { equals: input };
+}, QueryFilterOperators).optional();
 
 const QueryWhereSchema = z.lazy(() => {
   const logicalClause = z.union([
@@ -113,15 +167,18 @@ const QueryWhereSchema = z.lazy(() => {
       AND: logicalClause.optional(),
       OR: logicalClause.optional(),
       NOT: logicalClause.optional(),
-      id: QueryFilterOperators.optional(),
-      key: QueryFilterOperators.optional(),
-      name: QueryFilterOperators.optional(),
-      email: QueryFilterOperators.optional(),
-      status: QueryFilterOperators.optional(),
+      id: QueryTopLevelFieldFilter,
+      key: QueryTopLevelFieldFilter,
+      name: QueryTopLevelFieldFilter,
+      email: QueryTopLevelFieldFilter,
+      status: QueryTopLevelFieldFilter,
     })
     .strict()
     .refine(hasAtLeastOneRecordField, {
       message: "where entries must include at least one filter clause",
+    })
+    .refine(hasAtLeastOneDefinedRecordValue, {
+      message: "where entries must include at least one defined filter clause",
     });
 });
 
@@ -165,6 +222,10 @@ const QueryOrderBySchema = z
     message: "orderBy field names must be non-empty safe strings",
   });
 
+const hasAtLeastOneTruthyBooleanRecordValue = (
+  value: Record<string, boolean>,
+) => Object.values(value).some((entry) => entry === true);
+
 const QueryBooleanFieldRecordSchema = z
   .record(z.boolean())
   .refine(hasAtLeastOneRecordField, {
@@ -172,7 +233,13 @@ const QueryBooleanFieldRecordSchema = z
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
     message: "include/select field names must be non-empty safe strings",
+  })
+  .refine(hasAtLeastOneTruthyBooleanRecordValue, {
+    message: "include/select entries must include at least one true field",
   });
+
+const hasAtLeastOneNonNullishRecordValue = (value: Record<string, unknown>) =>
+  Object.values(value).some((entry) => entry !== null && entry !== undefined);
 
 const QueryCursorSchema = z
   .record(z.any())
@@ -181,12 +248,16 @@ const QueryCursorSchema = z
   })
   .refine((value) => Object.keys(value).every(isSafeRecordFieldKey), {
     message: "cursor field names must be non-empty safe strings",
+  })
+  .refine(hasAtLeastOneNonNullishRecordValue, {
+    message: "cursor entries must include at least one non-nullish value",
   });
 
 export const Query = z
   .object({
-    skip: z.number().int().min(0).default(0).optional(),
-    take: z.number().int().min(0).default(10).optional(),
+    skip: z.number().finite().int().min(0).default(0).optional(),
+    take: z.number().finite().int().min(0).default(10).optional(),
+    limit: z.number().finite().int().min(0).default(10).optional(),
     cursor: QueryCursorSchema.optional(),
     where: QueryWhereSchema.optional(),
     orderBy: z
@@ -195,7 +266,26 @@ export const Query = z
     include: QueryBooleanFieldRecordSchema.optional(),
     select: QueryBooleanFieldRecordSchema.optional(),
   })
-  .strict();
+  .strict()
+  .transform((query) => {
+    if (query.take === undefined && query.limit !== undefined) {
+      return { ...query, take: query.limit };
+    }
+
+    if (query.take !== undefined && query.limit === undefined) {
+      return { ...query, limit: query.take };
+    }
+
+    if (
+      query.take !== undefined &&
+      query.limit !== undefined &&
+      query.take !== query.limit
+    ) {
+      return { ...query, limit: query.take };
+    }
+
+    return query;
+  });
 
 // // Operators for filtering in a Prisma-like way
 // type PrismaFilterOperators<T extends ZodTypeAny> = zod.ZodObject<
@@ -285,15 +375,6 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
 ): zod.ZodTypeAny => {
   const fields = modelSchema.shape;
 
-  const isPlainObject = (value: unknown) => {
-    if (typeof value !== "object" || value === null || Array.isArray(value)) {
-      return false;
-    }
-
-    const prototype = Object.getPrototypeOf(value);
-    return prototype === Object.prototype || prototype === null;
-  };
-
   /**
    * For each field, accept either:
    *   - a full operator object: { equals, in, lt, ... }
@@ -342,6 +423,10 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
         .strict()
         .refine(hasAtLeastOneRecordField, {
           message: "where field filters must include at least one known operator",
+        })
+        .refine(hasAtLeastOneDefinedRecordValue, {
+          message:
+            "where field filters must include at least one defined operator value",
         }),
     );
 
@@ -374,6 +459,9 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
       .strict()
       .refine(hasAtLeastOneRecordField, {
         message: "where entries must include at least one filter clause",
+      })
+      .refine(hasAtLeastOneDefinedRecordValue, {
+        message: "where entries must include at least one defined filter clause",
       });
   }
 
@@ -395,6 +483,9 @@ export const createPrismaWhereSchema = <T extends zod.ZodRawShape>(
     .strict()
     .refine(hasAtLeastOneRecordField, {
       message: "where entries must include at least one filter clause",
+    })
+    .refine(hasAtLeastOneDefinedRecordValue, {
+      message: "where entries must include at least one defined filter clause",
     });
 };
 
@@ -430,10 +521,10 @@ export const getQueryInput = <S extends zod.ZodTypeAny>(
       data: dataSchema,
 
       // keep your query envelope fields
-      skip: zod.number().int().min(0).default(0).optional(),
+      skip: zod.number().finite().int().min(0).default(0).optional(),
       // Accept both `take` (Prisma-style) and legacy `limit`.
-      take: zod.number().int().min(0).default(10).optional(),
-      limit: zod.number().int().min(0).default(10).optional(),
+      take: zod.number().finite().int().min(0).default(10).optional(),
+      limit: zod.number().finite().int().min(0).default(10).optional(),
       cursor: QueryCursorSchema.optional(),
 
       // only valid for object schemas

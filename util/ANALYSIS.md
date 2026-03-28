@@ -5,7 +5,7 @@
 - Added normalization so `limit`-only inputs are mirrored into `take`, preventing downstream pagination drift.
 - Added reciprocal normalization so `take`-only inputs are mirrored into `limit`, preserving backward-compatibility for callers still keyed on `limit`.
 - Added conflict normalization for mixed `take`/`limit` envelopes: `take` is canonical and `limit` is rewritten to match.
-- Added non-negative integer validation for `skip`/`take`/`limit` to fail fast on invalid pagination payloads before resolver/database execution.
+- Added finite non-negative integer validation for `skip`/`take`/`limit` to fail fast on invalid pagination payloads (including `Infinity`/`-Infinity`/`NaN`) before resolver/database execution.
 - `createPrismaWhereSchema` now accepts single-object logical filters (`NOT`/`AND`/`OR`) in addition to non-empty arrays, matching common Prisma-style payloads while rejecting no-op empty arrays.
 - Field-level `not` now supports nested operator objects (not only scalar values), which aligns with Prisma filter semantics and avoids rejecting valid caller payloads.
 - Tightened string-filter `mode` to Prisma-compatible enum values (`default`/`insensitive`) instead of unrestricted strings, preventing silent acceptance of unsupported modes.
@@ -18,14 +18,23 @@
 - Added an `orderBy` field-name guard that rejects blank/whitespace keys (e.g. `{ "": "asc" }`), because these envelopes pass shape validation but are invalid Prisma sort clauses and should fail fast at schema-parse time.
 - Added matching blank-key guards for `include`/`select` projection envelopes because users can accidentally send whitespace keys from query builders; failing early at schema parse-time avoids forwarding malformed projection maps into resolver/database paths.
 - Added non-empty projection guards for `include`/`select` so `{}` no longer passes validation as a silent no-op envelope; this keeps projection intent explicit and prevents ambiguous downstream query construction.
+- Added an explicit truthy-selection guard for `include`/`select` so all-false projection maps fail schema parsing (`{ owner: false }`), preventing another no-op envelope shape from drifting into resolver/database query construction.
 - Added reserved-key guards for record-based envelopes (`orderBy`/`include`/`select`) to reject `__proto__`/`prototype`/`constructor`, reducing prototype-pollution-shaped input risk before resolver/database handling.
 - Tightened record-key validation to reject whitespace-padded field names (e.g. `" name "`) for `orderBy`/`include`/`select`/`cursor`, because these payloads are malformed and should fail before reaching resolver/database logic.
 - Applied the same record-envelope hardening to `cursor` (`Query` + `getQueryInput`): it now rejects empty objects and blank/reserved/padded field keys so malformed cursor payloads fail at schema-parse time instead of drifting into pagination code paths.
+- Added a non-nullish cursor-value guard so cursor envelopes with only `null`/`undefined` values are rejected early; this avoids ambiguous pagination envelopes that look structurally valid but cannot identify a concrete cursor.
 - Tightened top-level envelope parsing by marking `Query` and `getQueryInput` query objects as `.strict()`, because callers were able to send typo/unknown envelope keys that got silently stripped; rejecting them at parse-time improves caller feedback and avoids hidden query-shape drift.
 - Hardened `where` operator arrays by requiring non-empty `in`/`notIn` values (both root `Query` and recursive `createPrismaWhereSchema`) because empty membership arrays are ambiguous no-op filters that should fail fast at schema-parse time.
 - Added explicit non-empty `where` envelope guards in both `Query` and recursive `createPrismaWhereSchema`, because `{}` is an ambiguous no-op filter that should fail fast before resolver/database execution.
+- Added `limit` compatibility + take/limit normalization directly to exported `Query` (not just `getQueryInput`) so callers using shared `Query.parse(...)` can continue sending legacy pagination envelopes without schema rejection or drift.
 - Hardened top-level `Query` field-operator objects so they must include at least one known Prisma operator and reject unknown keys (for example `where: { name: {} }` or `where: { name: { regex: ... } }`), preventing silently stripped no-op filters from passing schema parse-time checks.
 - Tightened `where` object handling (`QueryWhereSchema` + recursive `createPrismaWhereSchema`) with `.strict()` so unknown top-level filter keys now fail parse-time validation instead of being silently stripped, which prevents typo-shaped filters from partially executing with unintended semantics.
 - Added test coverage to lock pagination behavior and shorthand `where` conversion, including invalid pagination rejection and `orderBy` array support.
 - Fixed shorthand filter coercion for non-plain object scalars (e.g. `Date`): only plain objects are treated as operator envelopes, so `where: { createdAt: new Date(...) }` now correctly normalizes to `{ createdAt: { equals: ... } }` instead of being stripped.
 - Hardened exported `Query` logical clause compatibility: `AND`/`OR`/`NOT` now accept either a single nested where object or an array, matching `createPrismaWhereSchema` and Prisma-style payloads.
+- Added recursive validation for object-shaped `not` filters in top-level `Query` operators so `{ not: {} }` and unknown-object payloads fail at schema parse time instead of slipping through as ambiguous/no-op filters.
+- Hardened top-level `Query` field filters so array-shaped `not` payloads are rejected with a clear parse-time error, preventing ambiguous Prisma-invalid envelopes from bypassing operator validation.
+- Aligned top-level `Query.where` behavior with `getQueryInput` shorthand semantics by normalizing scalar field filters (for example `{ where: { name: 'archer' } }`) into `{ equals: ... }`, reducing avoidable parse failures between shared query entrypoints.
+- Hardened field-operator envelope validation to require at least one defined operator value, so no-op payloads like `{ equals: undefined }` are rejected during schema parsing instead of silently passing.
+- Hardened top-level and recursive `where` envelopes to require at least one defined clause value (not just a present key), preventing no-op payloads like `{ where: { name: undefined } }` or `{ where: { AND: undefined } }` from passing parse-time validation.
+
