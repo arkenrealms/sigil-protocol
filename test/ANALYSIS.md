@@ -3,7 +3,7 @@
 - Added focused regression tests for `getQueryInput`.
 - Validates Prisma-style `take` preservation, legacy `limit` compatibility, and bidirectional `take`/`limit` normalization.
 - Validates conflicting `take` + `limit` envelopes normalize to `take` as canonical.
-- Validates pagination fields reject invalid values (negative and non-integer numbers).
+- Validates pagination fields reject invalid values (negative, non-integer, and non-finite numbers such as `Infinity`/`-Infinity`/`NaN`).
 - Validates Prisma-style single-object `NOT` clauses are accepted and normalized.
 - Validates field-level nested `not` operator objects are accepted (Prisma-compatible filter shape).
 - Validates string-filter `mode` accepts Prisma-compatible values and rejects unsupported values.
@@ -19,8 +19,17 @@
 - Adds regression coverage for unknown top-level `where` field keys (including mixed valid+invalid keys), ensuring schema parsing now fails instead of silently stripping typo-shaped filters.
 - Adds regression coverage for blank/padded-key `include`/`select` envelopes so malformed projection maps fail in schema parsing instead of leaking into resolver/database query construction.
 - Adds regression coverage for empty `include`/`select` envelopes so no-op projection objects are rejected at parse time instead of silently propagating.
+- Adds regression coverage for all-false `include`/`select` payloads, requiring at least one `true` projection field so boolean maps cannot pass as silent no-op envelopes.
 - Adds regression coverage for reserved prototype-pollution keys (`__proto__`, `prototype`, `constructor`) across `orderBy`/`include`/`select` so these payloads fail at parse time instead of reaching downstream handlers.
 - Adds cursor-envelope regression coverage so empty cursor objects and blank/padded/reserved cursor keys fail during schema parsing, while valid non-empty cursor objects continue to parse cleanly.
+- Extends cursor regression coverage to reject nullish-only cursor values (`null`/`undefined`) so structurally non-empty but semantically unusable pagination cursors fail before resolver/database handling.
 - Adds regression coverage that top-level query envelopes are strict: unknown/typo keys now fail in both `getQueryInput` and exported `Query` parsing instead of being silently stripped.
+- Adds regression coverage that exported `Query` accepts legacy `limit` pagination and normalizes conflicting `take`/`limit` values with `take` as canonical, matching existing `getQueryInput` behavior.
 - Adds regression coverage that rejects empty `in`/`notIn` arrays in `where` filters so no-op membership predicates fail before resolver/database execution.
 - Uses repo-defined `npm test` script (dist + jest) to satisfy source-change test gate.
+- Added regression coverage that top-level `Query` rejects empty/unknown object payloads inside field `not` filters, because this path previously accepted malformed nested filter objects without operator validation.
+- Added regression coverage that top-level `Query` rejects array-shaped field `not` payloads, preventing ambiguous filters that should use `in`/`notIn` semantics.
+- Added regression coverage that top-level `Query` accepts shorthand scalar `where` filters and normalizes them to `{ equals: ... }`, keeping shared query entrypoints behaviorally consistent.
+- Added regression coverage that `where` field-operator objects with only undefined values (e.g. `{ equals: undefined }`) are rejected to prevent no-op filters from passing parse-time validation.
+- Added regression coverage that `where` envelopes with only undefined clause values (for example `{ name: undefined }` / `{ AND: undefined }`) are rejected so no-op logical/scalar filters cannot slip through parse-time validation.
+
